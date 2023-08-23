@@ -1,9 +1,5 @@
-// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
-
-/* Code is directly ported from Compound Timelock implementation found here:
- *     https://github.com/compound-finance/compound-protocol/blob/master/contracts/Timelock.sol
- */
 
 contract Timelock {
     event NewAdmin(address indexed newAdmin);

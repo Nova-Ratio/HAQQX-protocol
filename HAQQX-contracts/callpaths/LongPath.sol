@@ -20,7 +20,7 @@ import '../mixins/StorageLayout.sol';
  * @dev    This exists as a standalone contract but will only ever contain proxy code,
  *         not state. As such it should never be called directly or externally, and should
  *         only be invoked with DELEGATECALL so that it operates on the contract state
- *         within the primary HaqqXSwap contract. */
+ *         within the primary HaqqSwap contract. */
 contract LongPath is MarketSequencer, SettleLayer, ProtocolAccount {
     
     using SafeCast for uint128;
@@ -55,7 +55,7 @@ contract LongPath is MarketSequencer, SettleLayer, ProtocolAccount {
                                        dir.poolIdx_);
 
                 verifyPermit(cntx.pool_, pairs.baseToken_, pairs.quoteToken_,
-                             dir.haqq_, dir.swap_, dir.conc_);
+                             dir.haqqx_, dir.swap_, dir.conc_);
                 cntx.roll_ = targetRoll(dir.chain_, pairs);
 
                 tradeOverPool(pairs.flow_, dir, cntx);
@@ -105,9 +105,9 @@ contract LongPath is MarketSequencer, SettleLayer, ProtocolAccount {
         }
     }
 
-    /* @notice Used at upgrade time to verify that the contract is a valid HaqqX sidecar proxy and used
+    /* @notice Used at upgrade time to verify that the contract is a valid Haqq sidecar proxy and used
      *         in the correct slot. */
-    function acceptHaqqXProxyRole (address, uint16 slot) public pure returns (bool) {
-        return slot == HaqqXSlots.LONG_PROXY_IDX;
+    function acceptHaqqProxyRole (address, uint16 slot) public pure returns (bool) {
+        return slot == HaqqSlots.LONG_PROXY_IDX;
     }
 }

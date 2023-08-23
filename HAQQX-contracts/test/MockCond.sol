@@ -2,10 +2,10 @@
 
 pragma solidity 0.8.19;
 
-import "../interfaces/IHaqqXCondOracle.sol";
+import "../interfaces/IHaqqCondOracle.sol";
 
-contract MockHaqqXNonceOracle is IHaqqXNonceOracle,
-    IHaqqXCondOracle{
+contract MockHaqqNonceOracle is IHaqqNonceOracle,
+    IHaqqCondOracle{
 
     address public user_;
     bytes32 public salt_;
@@ -17,7 +17,7 @@ contract MockHaqqXNonceOracle is IHaqqXNonceOracle,
         accept_ = accept;
     }
 
-    function checkHaqqXNonceSet (address user, bytes32 nonceSalt, uint32 nonce,
+    function checkHaqqNonceSet (address user, bytes32 nonceSalt, uint32 nonce,
                                 bytes calldata args) public override returns (bool) {
         user_ = user;
         salt_ = nonceSalt;
@@ -26,7 +26,7 @@ contract MockHaqqXNonceOracle is IHaqqXNonceOracle,
         return accept_;
     }
 
-    function checkHaqqXCond (address user, 
+    function checkHaqqCond (address user, 
                             bytes calldata args) public override returns (bool) {
         user_ = user;
         args_ = args;

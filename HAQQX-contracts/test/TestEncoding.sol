@@ -10,7 +10,7 @@ contract TestEncoding {
     Directives.PriceImproveReq public priceImprove;
     Directives.ChainingFlags public chaining;
     Directives.SwapDirective public swap;
-    Directives.HaqqDirective public haqqOpen;
+    Directives.HaqqXDirective public haqqxOpen;
     Directives.ConcentratedDirective public bookend;
     
     uint256 public poolIdx;
@@ -28,7 +28,7 @@ contract TestEncoding {
         Directives.OrderDirective memory dir = OrderEncoding.decodeOrder(input);
         poolIdx = dir.hops_[pairPos].pools_[poolPos].poolIdx_;
         swap = dir.hops_[pairPos].pools_[poolPos].swap_;
-        haqqOpen = dir.hops_[pairPos].pools_[poolPos].haqq_;
+        haqqxOpen = dir.hops_[pairPos].pools_[poolPos].haqqx_;
         chaining = dir.hops_[pairPos].pools_[poolPos].chain_;
     }
 

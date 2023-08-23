@@ -92,7 +92,7 @@ library OrderEncoding {
         uint concCnt;
         next = offset;
 
-        (pair.poolIdx_, pair.haqq_.isAdd_, pair.haqq_.rollType_, pair.haqq_.liquidity_,
+        (pair.poolIdx_, pair.haqqx_.isAdd_, pair.haqqx_.rollType_, pair.haqqx_.liquidity_,
             concCnt) = abi.decode(input[next:(next+32*5)], (uint256, bool, uint8, uint128, uint8));
 
         unchecked {

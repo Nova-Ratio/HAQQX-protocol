@@ -153,18 +153,18 @@ contract TestLiquidityCurve is LiquidityCurve {
     }
 
     function fixCurve (uint256 poolIdx, uint128 price,
-                       uint128 haqqLiq, uint128 concLiq) public {
+                       uint128 haqqxLiq, uint128 concLiq) public {
         CurveMath.CurveState memory curve = snapCurveInit(bytes32(poolIdx));
         curve.priceRoot_ = price;
-        curve.haqqSeeds_ = haqqLiq;
+        curve.haqqxSeeds_ = haqqxLiq;
         curve.concLiq_ = concLiq;
         curve.priceRoot_ = price;
         commitCurve(bytes32(poolIdx), curve);
     }
 
-    function fixAccum (uint256 poolIdx, uint64 haqq, uint64 conc) public {
+    function fixAccum (uint256 poolIdx, uint64 haqqx, uint64 conc) public {
         CurveMath.CurveState memory curve = snapCurve(bytes32(poolIdx));
-        curve.seedDeflator_ = haqq;
+        curve.seedDeflator_ = haqqx;
         curve.concGrowth_ = conc;
         commitCurve(bytes32(poolIdx), curve);
     }

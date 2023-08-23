@@ -20,7 +20,7 @@ library CurveAssimilate {
     using FixedPoint for uint128;
     using CurveMath for CurveMath.CurveState;
 
-    /* @notice Converts token-based fees into haqq liquidity on the curve,
+    /* @notice Converts token-based fees into haqqx liquidity on the curve,
      *         adjusting the price accordingly.
      * 
      * @dev The user is responsible to make sure that the price shift will never
@@ -140,7 +140,7 @@ library CurveAssimilate {
     }
 
     /* @notice Given a targeted aggregate liquidity inflator, affects that change in
-     *    the curve object by expanding the haqq seeds, and adjusting the cumulative
+     *    the curve object by expanding the haqqx seeds, and adjusting the cumulative
      *    growth accumulators as needed. 
      *
      * @dev To be conservative, a number of fixed point calculations will round down 
@@ -168,82 +168,82 @@ library CurveAssimilate {
         // The formula for Liquidity is
         //     L = A + C 
         //       = S * (1 + G) + C
-        //   (where A is haqq liqudity, S is haqq seeds, G is haqq growth,
+        //   (where A is haqqx liqudity, S is haqqx seeds, G is haqqx growth,
         //    and C is conc. liquidity)
         //
-        // Liquidity growth is distributed pro-rata, between the haqq and concentrated
-        // terms. Therefore haqq-side growth is reflected by inflating the growth rate:
+        // Liquidity growth is distributed pro-rata, between the haqqx and concentrated
+        // terms. Therefore haqqx-side growth is reflected by inflating the growth rate:
         //    A' = A * (1 + I)
         //       = S * (1 + G) * (1 + I)
-        //   (where A' is the post transaction haqq liquidity, and I is the liquidity
+        //   (where A' is the post transaction haqqx liquidity, and I is the liquidity
         //    inflator for this transaction)
         //
         // Note that if the deflator reaches its maximum value (equivalent to 2^16), then
         // this value will cease accumulating new rewards. Essentially all fees attributable
-        // to haqq liquidity will be burned. Economically speaking, this is unlikely to happen
-        // for any meaningful pool, but be aware. See the Haqq Rewards section of the
+        // to haqqx liquidity will be burned. Economically speaking, this is unlikely to happen
+        // for any meaningful pool, but be aware. See the HaqqX Rewards section of the
         // documentation at docs/CurveBound.md in the repo for more discussion.
         curve.seedDeflator_ = curve.seedDeflator_
             .compoundStack(inflator);
 
-        // Now compute the increase in haqq seed rewards to concentrated liquidity.
-        // Rewards stored as haqq seeds, but collected in the form of liquidity:
+        // Now compute the increase in haqqx seed rewards to concentrated liquidity.
+        // Rewards stored as haqqx seeds, but collected in the form of liquidity:
         //    Ar = Sr * (1 + G)
         //    Sr = Ar / (1 + G)
-        //  (where Ar are concentrated rewards in haqq liquidity, and Sr are
-        //   concentrated rewards denominated in haqq seeds)
+        //  (where Ar are concentrated rewards in haqqx liquidity, and Sr are
+        //   concentrated rewards denominated in haqqx seeds)
         //
         // Note that there's a minor difference from using the post-inflated cumulative
-        // haqq growth (G) calculated in the previous step. This rounds the rewards
+        // haqqx growth (G) calculated in the previous step. This rounds the rewards
         // growth down, which increases numerical over-collateralization.
 
-        // Concentrated rewards are represented as a rate of per unit haqq growth
+        // Concentrated rewards are represented as a rate of per unit haqqx growth
         // in seeds. Therefore to calculate the marginal increase in concentrated liquidity
         // rewards we deflate the marginal increase in total liquidity by the seed-to-liquidity
         // deflator
         uint64 concRewards = inflator.compoundShrink(curve.seedDeflator_);
 
-        // Represents the total number of new haqq liquidity seeds that are created from
+        // Represents the total number of new haqqx liquidity seeds that are created from
         // the swap fees accumulated as concentrated liquidity rewards. (All concentrated rewards
-        // are converted to haqq seeds.) To calculate we take the marginal increase in concentrated
+        // are converted to haqqx seeds.) To calculate we take the marginal increase in concentrated
         // rewards on this swap and multiply by the total amount of active concentrated liquidity.
-        uint128 newHaqqSeeds = uint256(curve.concLiq_.mulQ48(concRewards))
+        uint128 newHaqqXSeeds = uint256(curve.concLiq_.mulQ48(concRewards))
             .toUint128();
 
         // To be conservative in favor of over-collateralization, we want to round down the marginal
         // rewards.
-        curve.concGrowth_ += roundDownConcRewards(concRewards, newHaqqSeeds);
-        curve.haqqSeeds_ += newHaqqSeeds;
+        curve.concGrowth_ += roundDownConcRewards(concRewards, newHaqqXSeeds);
+        curve.haqqxSeeds_ += newHaqqXSeeds;
     }
 
     /* @notice To avoid over-promising rewards, we need to make sure that fixed-point
-     *   rounding effects don't round concentrated rewards growth more than haqq 
+     *   rounding effects don't round concentrated rewards growth more than haqqx 
      *   seeds. Otherwise we could possibly reach a situation where burned rewards 
-     *   exceed the the haqq seeds stored on the curve.
+     *   exceed the the haqqx seeds stored on the curve.
      *
      * @dev Functionally, the reward inflator is most likely higher precision than
-     *   the haqq seed injection. Therefore prevous fixed point math that rounds
+     *   the haqqx seed injection. Therefore prevous fixed point math that rounds
      *   down both could over-promise rewards realtive to backed seeds. To correct
      *   for this, we have to shrink the rewards inflator by the precision unit's 
-     *   fraction of the haqq injection. Thus guaranteeing that the adjusted rewards
+     *   fraction of the haqqx injection. Thus guaranteeing that the adjusted rewards
      *   inflator under-promises relative to backed seeds. */
-    function roundDownConcRewards (uint64 concInflator, uint128 newHaqqSeeds)
+    function roundDownConcRewards (uint64 concInflator, uint128 newHaqqXSeeds)
         private pure returns (uint64) {
         // No need to round down if the swap was too small for concentrated liquidity
         // to earn any rewards.
-        if (newHaqqSeeds == 0) { return 0; }
+        if (newHaqqXSeeds == 0) { return 0; }
 
         // We always want to make sure that the rewards accumulator is conservatively
         // rounded down relative to the actual liquidity being added to the curve.
         //
-        // To shrink the rewards by haqq round down precision we use the formula:
+        // To shrink the rewards by haqqx round down precision we use the formula:
         // R' = R * A / (A + 1)
-        //   (where R is the rewards inflator, and A is the haqq seed injection)
+        //   (where R is the rewards inflator, and A is the haqqx seed injection)
         //
         // Precision wise this all fits in 256-bit arithmetic, and is guaranteed to
         // cast to 64-bit result, since the result is always smaller than the original
         // inflator.
-        return uint64(uint256(concInflator) * uint256(newHaqqSeeds) /
-                      uint256(newHaqqSeeds + 1));
+        return uint64(uint256(concInflator) * uint256(newHaqqXSeeds) /
+                      uint256(newHaqqXSeeds + 1));
     }
 }

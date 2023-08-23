@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import "../interfaces/IHaqqXCondOracle.sol";
+import "../interfaces/IHaqqCondOracle.sol";
 
 contract MockProxySidecar {
 
@@ -14,9 +14,9 @@ contract MockProxySidecar {
         proxyDex_ = proxyDex;
     }
 
-    /* @notice Used at upgrade time to verify that the contract is a valid HaqqX sidecar proxy and used
+    /* @notice Used at upgrade time to verify that the contract is a valid Haqq sidecar proxy and used
      *         in the correct slot. */
-    function acceptHaqqXProxyRole (address dex, uint16 slot) public payable returns (bool) {
+    function acceptHaqqProxyRole (address dex, uint16 slot) public payable returns (bool) {
         return (proxyDex_ == address(0)) ||
             (proxySlot_ == slot && proxyDex_ == dex);
     }

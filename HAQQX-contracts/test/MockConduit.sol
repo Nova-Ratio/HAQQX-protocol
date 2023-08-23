@@ -2,10 +2,10 @@
 
 pragma solidity 0.8.19;
 
-import "../interfaces/IHaqqXLpConduit.sol";
+import "../interfaces/IHaqqLpConduit.sol";
 import "../libraries/PoolSpecs.sol";
 
-contract MockLpConduit is IHaqqXLpConduit {
+contract MockLpConduit is IHaqqLpConduit {
 
     bool accept_;
 
@@ -30,7 +30,7 @@ contract MockLpConduit is IHaqqXLpConduit {
         return poolSnap_ == PoolSpecs.encodeKey(base, quote, poolIdx);
     }
 
-    function depositHaqqXLiq (address sender, bytes32 poolHash,
+    function depositHaqqLiq (address sender, bytes32 poolHash,
                              int24 lowerTick, int24 upperTick, uint128 liq,
                              uint64 mileage) public override returns (bool) {
         isDeposit_ = true;
@@ -43,7 +43,7 @@ contract MockLpConduit is IHaqqXLpConduit {
         return accept_;
     }
 
-    function withdrawHaqqXLiq (address sender, bytes32 poolHash,
+    function withdrawHaqqLiq (address sender, bytes32 poolHash,
                               int24 lowerTick, int24 upperTick, uint128 liq,
                               uint64 mileage) public override returns (bool) {
         isDeposit_ = false;

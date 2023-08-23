@@ -8,7 +8,7 @@ import '../libraries/Chaining.sol';
 import '../libraries/Directives.sol';
 
 /* @title Proxy Caller
- * @notice Because of the Ethereum contract limit, much of the HaqqXSwap code is pushed
+ * @notice Because of the Ethereum contract limit, much of the HaqqSwap code is pushed
  *         into sidecar proxy contracts, which is involed with DELEGATECALLs. The code
  *         moved to these sidecars is less gas critical than the code in the core contract. 
  *         This provides a facility for invoking proxy conjtracts in a consistent way by
@@ -19,7 +19,7 @@ contract ProxyCaller is StorageLayout {
     using Chaining for Chaining.PairFlow;
 
     /* @notice Passes through the protocolCmd call to a sidecar proxy. */
-        function callProtocolCmd (uint16 proxyIdx, bytes calldata input) internal
+    function callProtocolCmd (uint16 proxyIdx, bytes calldata input) internal
         returns (bytes memory) {
         assertProxy(proxyIdx);
         (bool success, bytes memory output) = proxyPaths_[proxyIdx].delegatecall(
@@ -46,7 +46,7 @@ contract ProxyCaller is StorageLayout {
 
     function assertProxy (uint16 proxyIdx) private view {
         require(proxyPaths_[proxyIdx] != address(0));
-        require(!inSafeMode_ || proxyIdx == HaqqXSlots.SAFE_MODE_PROXY_PATH || proxyIdx == HaqqXSlots.BOOT_PROXY_IDX);
+        require(!inSafeMode_ || proxyIdx == HaqqSlots.SAFE_MODE_PROXY_PATH || proxyIdx == HaqqSlots.BOOT_PROXY_IDX);
     }
 
     function verifyCallResult (bool success, bytes memory returndata) internal pure returns (bytes memory) {
@@ -65,16 +65,16 @@ contract ProxyCaller is StorageLayout {
         }
     }
 
-    /* @notice Invokes mintHaqq() call in MicroPaths sidecar and relays the result. */
-    function callMintHaqq (CurveCache.Cache memory curve, uint128 liq,
+    /* @notice Invokes mintHaqqX() call in MicroPaths sidecar and relays the result. */
+    function callMintHaqqX (CurveCache.Cache memory curve, uint128 liq,
                               bytes32 poolHash) internal
         returns (int128 basePaid, int128 quotePaid) {
         (bool success, bytes memory output) =
-            proxyPaths_[HaqqXSlots.MICRO_PROXY_IDX].delegatecall
+            proxyPaths_[HaqqSlots.MICRO_PROXY_IDX].delegatecall
             (abi.encodeWithSignature
-             ("mintHaqq(uint128,uint128,uint128,uint64,uint64,uint128,bytes32)",
+             ("mintHaqqX(uint128,uint128,uint128,uint64,uint64,uint128,bytes32)",
               curve.curve_.priceRoot_, 
-              curve.curve_.haqqSeeds_,
+              curve.curve_.haqqxSeeds_,
               curve.curve_.concLiq_,
               curve.curve_.seedDeflator_,
               curve.curve_.concGrowth_,
@@ -82,21 +82,21 @@ contract ProxyCaller is StorageLayout {
         require(success);
         
         (basePaid, quotePaid,
-         curve.curve_.haqqSeeds_) = 
+         curve.curve_.haqqxSeeds_) = 
             abi.decode(output, (int128, int128, uint128));
     }
 
-    /* @notice Invokes burnHaqq() call in MicroPaths sidecar and relays the result. */
-    function callBurnHaqq (CurveCache.Cache memory curve, uint128 liq,
+    /* @notice Invokes burnHaqqX() call in MicroPaths sidecar and relays the result. */
+    function callBurnHaqqX (CurveCache.Cache memory curve, uint128 liq,
                               bytes32 poolHash) internal
         returns (int128 basePaid, int128 quotePaid) {
 
         (bool success, bytes memory output) =
-            proxyPaths_[HaqqXSlots.MICRO_PROXY_IDX].delegatecall
+            proxyPaths_[HaqqSlots.MICRO_PROXY_IDX].delegatecall
             (abi.encodeWithSignature
-             ("burnHaqq(uint128,uint128,uint128,uint64,uint64,uint128,bytes32)",
+             ("burnHaqqX(uint128,uint128,uint128,uint64,uint64,uint128,bytes32)",
               curve.curve_.priceRoot_, 
-              curve.curve_.haqqSeeds_,
+              curve.curve_.haqqxSeeds_,
               curve.curve_.concLiq_,
               curve.curve_.seedDeflator_,
               curve.curve_.concGrowth_,
@@ -104,7 +104,7 @@ contract ProxyCaller is StorageLayout {
         require(success);
         
         (basePaid, quotePaid,
-         curve.curve_.haqqSeeds_) = 
+         curve.curve_.haqqxSeeds_) = 
             abi.decode(output, (int128, int128, uint128));
     }
 
@@ -115,11 +115,11 @@ contract ProxyCaller is StorageLayout {
         returns (int128 basePaid, int128 quotePaid) {
 
         (bool success, bytes memory output) =
-            proxyPaths_[HaqqXSlots.MICRO_PROXY_IDX].delegatecall
+            proxyPaths_[HaqqSlots.MICRO_PROXY_IDX].delegatecall
             (abi.encodeWithSignature
              ("mintRange(uint128,int24,uint128,uint128,uint64,uint64,int24,int24,uint128,bytes32)",
               curve.curve_.priceRoot_, curve.pullPriceTick(),
-              curve.curve_.haqqSeeds_,
+              curve.curve_.haqqxSeeds_,
               curve.curve_.concLiq_,
               curve.curve_.seedDeflator_,
               curve.curve_.concGrowth_,
@@ -127,7 +127,7 @@ contract ProxyCaller is StorageLayout {
         require(success);
 
         (basePaid, quotePaid,
-         curve.curve_.haqqSeeds_,
+         curve.curve_.haqqxSeeds_,
          curve.curve_.concLiq_) = 
             abi.decode(output, (int128, int128, uint128, uint128));
     }
@@ -139,17 +139,17 @@ contract ProxyCaller is StorageLayout {
         returns (int128 basePaid, int128 quotePaid) {
         
         (bool success, bytes memory output) =
-            proxyPaths_[HaqqXSlots.MICRO_PROXY_IDX].delegatecall
+            proxyPaths_[HaqqSlots.MICRO_PROXY_IDX].delegatecall
             (abi.encodeWithSignature
              ("burnRange(uint128,int24,uint128,uint128,uint64,uint64,int24,int24,uint128,bytes32)",
               curve.curve_.priceRoot_, curve.pullPriceTick(),
-              curve.curve_.haqqSeeds_, curve.curve_.concLiq_,
+              curve.curve_.haqqxSeeds_, curve.curve_.concLiq_,
               curve.curve_.seedDeflator_, curve.curve_.concGrowth_,
               bidTick, askTick, liq, poolHash));
         require(success);
         
         (basePaid, quotePaid,
-         curve.curve_.haqqSeeds_,
+         curve.curve_.haqqxSeeds_,
          curve.curve_.concLiq_) = 
             abi.decode(output, (int128, int128, uint128, uint128));
     }
@@ -160,7 +160,7 @@ contract ProxyCaller is StorageLayout {
                        Directives.SwapDirective memory swap,
                        PoolSpecs.PoolCursor memory pool) internal {
         (bool success, bytes memory output) =
-            proxyPaths_[HaqqXSlots.MICRO_PROXY_IDX].delegatecall
+            proxyPaths_[HaqqSlots.MICRO_PROXY_IDX].delegatecall
             (abi.encodeWithSignature
              ("sweepSwap((uint128,uint128,uint128,uint64,uint64),int24,(bool,bool,uint8,uint128,uint128),((uint8,uint16,uint8,uint16,uint8,uint8,uint8),bytes32,address))",
               curve.curve_, curve.pullPriceTick(), swap, pool));
@@ -168,7 +168,7 @@ contract ProxyCaller is StorageLayout {
 
         Chaining.PairFlow memory swapFlow;
         (swapFlow, curve.curve_.priceRoot_,
-         curve.curve_.haqqSeeds_,
+         curve.curve_.haqqxSeeds_,
          curve.curve_.concLiq_,
          curve.curve_.seedDeflator_,
          curve.curve_.concGrowth_) = 
@@ -184,10 +184,10 @@ contract ProxyCaller is StorageLayout {
     function callCrossFlag (bytes32 poolHash, int24 tick,
                             bool isBuy, uint64 feeGlobal)
         internal returns (int128 concLiqDelta) {
-        require(proxyPaths_[HaqqXSlots.FLAG_CROSS_PROXY_IDX] != address(0));
+        require(proxyPaths_[HaqqSlots.FLAG_CROSS_PROXY_IDX] != address(0));
         
         (bool success, bytes memory cmd) =
-            proxyPaths_[HaqqXSlots.FLAG_CROSS_PROXY_IDX].delegatecall
+            proxyPaths_[HaqqSlots.FLAG_CROSS_PROXY_IDX].delegatecall
             (abi.encodeWithSignature
              ("crossCurveFlag(bytes32,int24,bool,uint64)",
               poolHash, tick, isBuy, feeGlobal));

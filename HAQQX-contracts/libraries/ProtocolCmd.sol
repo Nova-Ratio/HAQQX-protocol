@@ -6,7 +6,7 @@ import './SafeCast.sol';
 
 /* @title Protocol Command library.
  *
- * @notice To allow for flexibility and upgradeability the top-level interface to the HaqqX
+ * @notice To allow for flexibility and upgradeability the top-level interface to the Haqq
  *         dex contract contains a general purpose encoding scheme. User commands specify a
  *         proxy contract index, and input is passed raw and unformatted. Each proxy contract
  *         is free to specify its own input format, but by convention many proxy contracts
@@ -19,9 +19,9 @@ library ProtocolCmd {
     ////////////////////////////////////////////////////////////////////////////
     // Privileged commands invokable by direct governance only.
     ////////////////////////////////////////////////////////////////////////////
-    // Code for transferring authority in the underlying HaqqXSwapDex contract.
+    // Code for transferring authority in the underlying HaqqSwapDex contract.
     uint8 constant AUTHORITY_TRANSFER_CODE = 20;
-    // Code to upgrade one of the sidecar proxy contracts on HaqqXSwapDex.
+    // Code to upgrade one of the sidecar proxy contracts on HaqqSwapDex.
     uint8 constant UPGRADE_DEX_CODE = 21;
     // Code to force hot path to use the proxy contract
     uint8 constant HOT_OPEN_CODE = 22;
@@ -94,12 +94,12 @@ library UserCmd {
     uint8 constant BURN_RANGE_LIQ_LP = 2;
     uint8 constant BURN_RANGE_BASE_LP = 21;
     uint8 constant BURN_RANGE_QUOTE_LP = 22;
-    uint8 constant MINT_HAQQ_LIQ_LP = 3;
-    uint8 constant MINT_HAQQ_BASE_LP = 31;
-    uint8 constant MINT_HAQQ_QUOTE_LP = 32;
-    uint8 constant BURN_HAQQ_LIQ_LP = 4;
-    uint8 constant BURN_HAQQ_BASE_LP = 41;
-    uint8 constant BURN_HAQQ_QUOTE_LP = 42;
+    uint8 constant MINT_HAQQX_LIQ_LP = 3;
+    uint8 constant MINT_HAQQX_BASE_LP = 31;
+    uint8 constant MINT_HAQQX_QUOTE_LP = 32;
+    uint8 constant BURN_HAQQX_LIQ_LP = 4;
+    uint8 constant BURN_HAQQX_BASE_LP = 41;
+    uint8 constant BURN_HAQQX_QUOTE_LP = 42;
     uint8 constant HARVEST_LP = 5;
 
     ////////////////////////////////////////////////////////////////////////////

@@ -110,7 +110,7 @@ library PoolSpecs {
      *         a specific pool type index. */
     function encodeKey (address tokenX, address tokenY, uint256 poolIdx)
         internal pure returns (bytes32) {
-        require(tokenX < tokenY, "TCE");
+        require(tokenX < tokenY);
         return keccak256(abi.encode(tokenX, tokenY, poolIdx));
     }
 

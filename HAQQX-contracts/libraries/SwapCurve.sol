@@ -27,7 +27,7 @@ library SwapCurve {
     /* @notice Applies the swap on to the liquidity curve, either fully exhausting
      *   the swap or reaching the concentrated liquidity bounds or the user-specified
      *   limit price. After calling, the curve and swap objects will be updated with
-     *   the swap price impact, the liquidity fees assimilated into the curve's haqq
+     *   the swap price impact, the liquidity fees assimilated into the curve's haqqx
      *   liquidity, and the swap accumulators incremented with the cumulative flows.
      * 
      * @param curve - The current in-range liquidity curve. After calling, price and
@@ -87,7 +87,7 @@ library SwapCurve {
      * @return liqFee The total fees that's allocated as liquidity rewards accumulated
      *                to liquidity providers in the pool (in the opposite side tokens of
      *                the swap denomination).
-     * @return protoFee The total fee accumulated as HaqqXSwap protocol fees. */
+     * @return protoFee The total fee accumulated as HaqqSwap protocol fees. */
     function calcFeeOverSwap (CurveMath.CurveState memory curve, uint128 swapQty,
                               uint16 feeRate, uint8 protoTake,
                               bool inBaseQty, uint128 limitPrice)

@@ -19,7 +19,7 @@ contract TestAgentMask is AgentMask {
                                   bytes calldata conds,
                                   bytes memory tip,
                                   bytes calldata signature) public {
-        HaqqXRelayerCall memory call = HaqqXRelayerCall(callpath, cmd, conds, tip);
+        HaqqRelayerCall memory call = HaqqRelayerCall(callpath, cmd, conds, tip);
         signer_ = verifySignature(call, signature);
     }
 

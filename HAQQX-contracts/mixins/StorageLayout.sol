@@ -10,7 +10,7 @@ import '../libraries/KnockoutLiq.sol';
 /* @title Storage layout base layer
  * 
  * @notice Only exists to enforce a single consistent storage layout. Not
- *    designed to be externally used. All storage in any HaqqXSwap contract
+ *    designed to be externally used. All storage in any HaqqSwap contract
  *    is defined here. That allows easy use of delegatecall() to move code
  *    over the 24kb into proxy contracts.
  *
@@ -114,13 +114,13 @@ contract StorageLayout {
         bool atomicLiq_;
     }
 
-    struct HaqqPosition {
+    struct HaqqXPosition {
         uint128 seeds_;
         uint32 timestamp_;
     }
     
     mapping(bytes32 => RangePosition) internal positions_;
-    mapping(bytes32 => HaqqPosition) internal ambPositions_;
+    mapping(bytes32 => HaqqXPosition) internal ambPositions_;
     /**************************************************************/
 
 
@@ -155,10 +155,10 @@ contract StorageLayout {
  *
  * @dev Note that if the struct of StorageLayer changes, these slot locations *will*
  *      change, and the values below will have to be manually updated. */
-library HaqqXSlots {
+library HaqqSlots {
 
     // Slot location of storage slots and/or hash map storage slot offsets. Values below
-    // can be used to directly read state in HaqqXSwapDex by other contracts.
+    // can be used to directly read state in HaqqSwapDex by other contracts.
     uint constant public AUTHORITY_SLOT = 0;
     uint constant public LVL_MAP_SLOT = 65538;
     uint constant public KO_PIVOT_SLOT = 65539;
@@ -194,6 +194,6 @@ contract StoragePrototypes is StorageLayout {
     UserBalance bal_;
     CurveMath.CurveState curve_;
     RangePosition pos_;
-    HaqqPosition amb_;
+    HaqqXPosition amb_;
     BookLevel lvl_;
 }

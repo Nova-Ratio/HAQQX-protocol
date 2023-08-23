@@ -24,10 +24,10 @@ contract SettleLayer is AgentMask {
      * @dev    This method settles any net Ether debits or credits in the ethFlows
      *         argument, by consuming the native ETH attached in msg.value, using
      *         popMsgVal(). popMsgVal() sets a transaction level flag, and to prevent
-     *         double spent will revert and fail the top level HaqqXSwapDex contract
+     *         double spent will revert and fail the top level HaqqSwapDex contract
      *         call if ever called twice in the same transction. Therefore this method
      *         must only be called at most once per transaction, otherwise the top-level
-     *         HaqqXSwapDex contract call will revert and fail.  
+     *         HaqqSwapDex contract call will revert and fail.  
      *
      * @param flow The net flow for this settlement leg. Negative for credits paid to
      *             user, positive for debits.
@@ -376,7 +376,7 @@ contract SettleLayer is AgentMask {
 
     /* @notice Collects a token debt from a specfic debtor.
      * @dev    Note that this function does *not* assert that the post-transfer balance
-     *         is correct. HaqqXSwap is not safe to use for any fee-on-transfer tokens
+     *         is correct. HaqqSwap is not safe to use for any fee-on-transfer tokens
      *         or any other tokens that break ERC20 transfer functionality.
      *
      * @param recv The address of the debtor being collected from.

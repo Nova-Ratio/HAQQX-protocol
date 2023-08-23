@@ -18,45 +18,45 @@ library CurveMath {
     using SafeCast for uint256;
     using SafeCast for uint192;
 
-    /* All HaqqXSwap swaps occur as legs across locally stable constant-product AMM
+    /* All HaqqSwap swaps occur as legs across locally stable constant-product AMM
      * curves. For large moves across tick boundaries, the state of this curve might 
      * change as range-bound liquidity is kicked in or out of the currently active 
      * curve. But for small moves within tick boundaries (or between tick boundaries 
      * with no liquidity bumps), the curve behaves like a classic constant-product AMM.
      *
-     * HaqqXSwap tracks two types of liquidity. 1) Haqq liquidity that is non-
+     * HaqqSwap tracks two types of liquidity. 1) HaqqX liquidity that is non-
      * range bound and remains active at all prices from zero to infinity, until 
      * removed by the staking user. 2) Concentrated liquidity that is tied to an 
      * arbitrary lower<->upper tick range and is kicked out of the curve when the
      * price moves out of range.
      *
-     * In the HaqqXSwap model all collected fees are directly incorporated as expanded
+     * In the HaqqSwap model all collected fees are directly incorporated as expanded
      * liquidity onto the curve itself. (See CurveAssimilate.sol for more on the 
-     * mechanics.) All accumulated fees are added as haqq-type liquidity, even those
+     * mechanics.) All accumulated fees are added as haqqx-type liquidity, even those
      * fees that belong to the pro-rata share of the active concentrated liquidity.
      * This is because on an aggregate level, we can't break down the pro-rata share
      * of concentrated rewards to the potentially near infinite concentrated range
      * possibilities.
      *
      * Because of this concentrated liquidity can be flatly represented as 1:1 with
-     * contributed liquidity. Haqq liquidity, in contrast, deflates over time as
+     * contributed liquidity. HaqqX liquidity, in contrast, deflates over time as
      * it accumulates rewards. Therefore it's represented in terms of seed amount,
-     * i.e. the equivalent of 1 unit of haqq liquidity contributed at the inception
+     * i.e. the equivalent of 1 unit of haqqx liquidity contributed at the inception
      * of the pool. As fees accumulate the conversion rate from seed to liquidity 
      * continues to increase. 
      *
      * Finally concentrated liquidity rewards are represented in terms of accumulated
-     * haqq seeds. This automatically takes care of the compounding of haqq 
+     * haqqx seeds. This automatically takes care of the compounding of haqqx 
      * rewards compounded on top of concentrated rewards. 
      *
      * @param priceRoot_ The square root of the price ratio exchange rate between the
      *   base and quote-side tokens in the AMM curve. (represented in Q64.64 fixed point)
-     * @param haqqSeeds_ The total haqq liquidity seeds in the current curve. 
-     *   (Inflated by seed deflator to get efective haqq liquidity)
+     * @param haqqxSeeds_ The total haqqx liquidity seeds in the current curve. 
+     *   (Inflated by seed deflator to get efective haqqx liquidity)
      * @param concLiq_ The total concentrated liquidity active and in range at the
      *   current state of the curve.
      * @param seedDeflator_ The cumulative growth rate (represented as Q16.48 fixed
-     *    point) of a hypothetical 1-unit of haqq liquidity held in the pool since
+     *    point) of a hypothetical 1-unit of haqqx liquidity held in the pool since
      *    inception.
      * @param concGrowth_ The cumulative rewards growth rate (represented as Q16.48
      *   fixed point) of hypothetical 1 unit of concentrated liquidity in range in the
@@ -69,7 +69,7 @@ library CurveMath {
      *      slightly smaller reward payouts. */
     struct CurveState {
         uint128 priceRoot_;
-        uint128 haqqSeeds_;
+        uint128 haqqxSeeds_;
         uint128 concLiq_;
         uint64 seedDeflator_;
         uint64 concGrowth_;
@@ -85,9 +85,9 @@ library CurveMath {
      * @return - The total scalar liquidity. Equivalent to sqrt(X*Y) in an equivalent 
      *           constant-product AMM. */
     function activeLiquidity (CurveState memory curve) internal pure returns (uint128) {
-        uint128 haqq = CompoundMath.inflateLiqSeed
-            (curve.haqqSeeds_, curve.seedDeflator_);
-        return LiquidityMath.addLiq(haqq, curve.concLiq_);
+        uint128 haqqx = CompoundMath.inflateLiqSeed
+            (curve.haqqxSeeds_, curve.seedDeflator_);
+        return LiquidityMath.addLiq(haqqx, curve.concLiq_);
     }
 
     /* @notice Similar to calcLimitFlows(), except returns the max possible flow in the
@@ -285,7 +285,7 @@ library CurveMath {
         }
     }
 
-    /* @notice Calculated the amount of haqq liquidity supported by a fixed amount of 
+    /* @notice Calculated the amount of haqqx liquidity supported by a fixed amount of 
      *         collateral. Note that this calculates the collateral only needed by one
      *         side of the pair.
      *
@@ -295,7 +295,7 @@ library CurveMath {
      * @param inBase If true, the collateral represents the base-side token in the pair.
      *               If false the quote side token.
      * @param price The current (square root) price of the curve as Q64.64 fixed point.
-     * @returns The total amount of haqq liquidity supported by the collateral. */
+     * @returns The total amount of haqqx liquidity supported by the collateral. */
     function liquiditySupported (uint128 collateral, bool inBase, uint128 price)
         internal pure returns (uint128) {
         return inBase ?

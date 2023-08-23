@@ -5,7 +5,7 @@ pragma solidity 0.8.19;
 import '../libraries/Directives.sol';
 import '../libraries/PoolSpecs.sol';
 import '../libraries/PriceGrid.sol';
-import '../interfaces/IHaqqXPermitOracle.sol';
+import '../interfaces/IHaqqPermitOracle.sol';
 import './StorageLayout.sol';
 
 /* @title Pool registry mixin
@@ -28,8 +28,8 @@ contract PoolRegistry is StorageLayout {
                                bool isBuy, bool inBaseQty, uint128 qty) internal {
         if (pool.oracle_ != address(0)) {
             uint16 discount =
-                IHaqqXPermitOracle(pool.oracle_)
-                .checkApprovedForHaqqXSwap(lockHolder_, msg.sender, base, quote,
+                IHaqqPermitOracle(pool.oracle_)
+                .checkApprovedForHaqqSwap(lockHolder_, msg.sender, base, quote,
                                           isBuy, inBaseQty, qty, pool.head_.feeRate_);
             applyDiscount(pool, discount);
         }
@@ -42,8 +42,8 @@ contract PoolRegistry is StorageLayout {
                                address base, address quote,
                                int24 bidTick, int24 askTick, uint128 liq) internal {
         if (pool.oracle_ != address(0)) {
-            bool approved = IHaqqXPermitOracle(pool.oracle_)
-                .checkApprovedForHaqqXMint(lockHolder_, msg.sender, base, quote,
+            bool approved = IHaqqPermitOracle(pool.oracle_)
+                .checkApprovedForHaqqMint(lockHolder_, msg.sender, base, quote,
                                           bidTick, askTick, liq);
             require(approved, "Z");
         }
@@ -56,8 +56,8 @@ contract PoolRegistry is StorageLayout {
                                address base, address quote,
                                int24 bidTick, int24 askTick, uint128 liq) internal {
         if (pool.oracle_ != address(0)) {
-            bool approved = IHaqqXPermitOracle(pool.oracle_)
-                .checkApprovedForHaqqXBurn(lockHolder_, msg.sender, base, quote,
+            bool approved = IHaqqPermitOracle(pool.oracle_)
+                .checkApprovedForHaqqBurn(lockHolder_, msg.sender, base, quote,
                                           bidTick, askTick, liq);
             require(approved, "Z");
         }
@@ -68,12 +68,12 @@ contract PoolRegistry is StorageLayout {
      *         permissionless this function will just noop. */
     function verifyPermit (PoolSpecs.PoolCursor memory pool,
                            address base, address quote,
-                           Directives.HaqqDirective memory haqq,
+                           Directives.HaqqXDirective memory haqqx,
                            Directives.SwapDirective memory swap,
                            Directives.ConcentratedDirective[] memory concs) internal {
         if (pool.oracle_ != address(0)) {
-            uint16 discount = IHaqqXPermitOracle(pool.oracle_)
-                .checkApprovedForHaqqXPool(lockHolder_, msg.sender, base, quote, haqq,
+            uint16 discount = IHaqqPermitOracle(pool.oracle_)
+                .checkApprovedForHaqqPool(lockHolder_, msg.sender, base, quote, haqqx,
                                           swap, concs, pool.head_.feeRate_);
             applyDiscount(pool, discount);
         }
@@ -93,8 +93,8 @@ contract PoolRegistry is StorageLayout {
     function verifyPermitInit (PoolSpecs.PoolCursor memory pool,
                                address base, address quote, uint256 poolIdx) internal {
         if (pool.oracle_ != address(0)) {
-            bool approved = IHaqqXPermitOracle(pool.oracle_).
-                checkApprovedForHaqqXInit(lockHolder_, msg.sender, base, quote, poolIdx);
+            bool approved = IHaqqPermitOracle(pool.oracle_).
+                checkApprovedForHaqqInit(lockHolder_, msg.sender, base, quote, poolIdx);
             require(approved, "Z");
         }
     }
@@ -135,7 +135,7 @@ contract PoolRegistry is StorageLayout {
         // valid oracle contract
         address oracle = PoolSpecs.oracleForPool(poolIdx, oracleFlags);
         if (oracle != address(0)) {
-            require(oracle.code.length > 0 && IHaqqXPermitOracle(oracle).acceptsPermitOracle(),
+            require(oracle.code.length > 0 && IHaqqPermitOracle(oracle).acceptsPermitOracle(),
                 "Oracle");    
         }
     }

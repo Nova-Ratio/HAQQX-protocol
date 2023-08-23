@@ -147,7 +147,7 @@ contract TestCurveMath {
         CurveMath.CurveState memory curve = buildCurve(seed, growth, conc, price);
         CurveAssimilate.assimilateLiq(curve, feesPaid, inBase);
         
-        (shiftPrice, shiftSeed) = (curve.priceRoot_, curve.haqqSeeds_);
+        (shiftPrice, shiftSeed) = (curve.priceRoot_, curve.haqqxSeeds_);
         (shiftGrowth, concGrowth) = (curve.seedDeflator_,
                                      curve.concGrowth_);
     }

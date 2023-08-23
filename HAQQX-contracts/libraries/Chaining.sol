@@ -70,7 +70,7 @@ library Chaining {
         RollTarget roll_;
     }
 
-    /* @notice In certain contexts HaqqXSwap provides the ability for the user to
+    /* @notice In certain contexts HaqqSwap provides the ability for the user to
     *     substitute pre-fixed quantity fields with empty "rolling" fields that are
     *     back-filled based on some cumulative flow across the execution. For example
     *     a swap may specify to buy however much of quote token was demanded by an
@@ -149,7 +149,7 @@ library Chaining {
         }
     }
 
-    /* @notice Computes the amount of haqq liquidity to mint/burn in order to 
+    /* @notice Computes the amount of haqqx liquidity to mint/burn in order to 
      *   neutralize the previously accumulated flow in the pair.
      *
      * @dev Note that because of integer rounding liquidity can't exactly neutralize
@@ -159,23 +159,23 @@ library Chaining {
      *
      * @param roll Indicates the context for the type of roll target that the call 
      *   should target. (See RollTarget struct above.)
-     * @param dir The haqq liquidity directive the liquidity is applied to
+     * @param dir The haqqx liquidity directive the liquidity is applied to
      * @param curve The liquidity curve that is being minted or burned against.
      * @param flow The previously accumulated flow on this pair. Based on the context 
      *   above, this function will target the accumulated flow contained herein.
      * 
-     * @return liq The amount of haqq liquidity to mint/burn to meet the target.
+     * @return liq The amount of haqqx liquidity to mint/burn to meet the target.
      * @return isAdd If true, then liquidity must be minted to neutralize rolling flow,
      *   If false, then liquidity must be burned. */
     function plugLiquidity (RollTarget memory roll,
-                            Directives.HaqqDirective memory dir,
+                            Directives.HaqqXDirective memory dir,
                             CurveMath.CurveState memory curve,
                             PairFlow memory flow) internal pure {
         if (dir.rollType_ != NO_ROLL_TYPE) {
             (uint128 collateral, bool isAdd) =
                 collateralDemand(roll, flow, dir.rollType_, dir.liquidity_);
 
-            uint128 liq = sizeHaqqLiq
+            uint128 liq = sizeHaqqXLiq
                 (collateral, isAdd, curve.priceRoot_, roll.inBaseQty_);
             (dir.liquidity_, dir.isAdd_) = (liq, isAdd);
         }
@@ -200,7 +200,7 @@ library Chaining {
      * @param lowTick The tick index of the lower bound of the concentrated liquidity
      * @param highTick The tick index of the upper bound of the concentrated liquidity
      * 
-     * @return seed The amount of haqq liquidity seeds to mint/burn to meet the
+     * @return seed The amount of haqqx liquidity seeds to mint/burn to meet the
      *   target. 
      * @return isAdd If true, then liquidity must be minted to neutralize rolling flow,
      *   If false, then liquidity must be burned. */
@@ -218,7 +218,7 @@ library Chaining {
         (bend.liquidity_, bend.isAdd_) = (liq, isAdd);
     }
 
-    /* @notice Calculates the amount of haqq liquidity that a fixed amount of token
+    /* @notice Calculates the amount of haqqx liquidity that a fixed amount of token
      *         collateral maps to into the the pool.
      *
      * @dev Will always round liquidity conservatively. That is when being used in an add
@@ -235,14 +235,14 @@ library Chaining {
      *                  token.
      * @return The amount of liquidity, in sqrt(X*Y) units, supported by this 
      *         collateral. */
-    function sizeHaqqLiq (uint128 collateral, bool isAdd, uint128 priceRoot,
+    function sizeHaqqXLiq (uint128 collateral, bool isAdd, uint128 priceRoot,
                              bool inBaseQty) internal pure returns (uint128) {
         uint128 liq = bufferCollateral(collateral, isAdd)
             .liquiditySupported(inBaseQty, priceRoot);
         return isAdd ? liq : (liq + 1);
     }
 
-    /* @notice Same as sizeHaqqLiq() (see above), but calculates for concentrated 
+    /* @notice Same as sizeHaqqXLiq() (see above), but calculates for concentrated 
      *         liquidity in a given range.
      * 
      * @param collateral The amount of collateral (either base of quote) tokens that we

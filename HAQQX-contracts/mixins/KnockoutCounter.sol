@@ -27,7 +27,7 @@ contract KnockoutCounter is LevelBook, PoolRegistry, AgentMask {
     /* @notice Emitted at any point a pivot is knocked out. User can use the history
      *         of these logs to reconstructo the Merkle history necessary to claim
      *         their fees. */
-    event HaqqXKnockoutCross (bytes32 indexed pool, int24 indexed tick, bool isBid,
+    event HaqqKnockoutCross (bytes32 indexed pool, int24 indexed tick, bool isBid,
                              uint32 pivotTime, uint64 feeMileage, uint160 commitEntropy);
 
     
@@ -54,7 +54,7 @@ contract KnockoutCounter is LevelBook, PoolRegistry, AgentMask {
         uint64 feeRange = knockoutRangeLiq(pool, pivot, isBid, tick, feeGlobal);
 
         merkle.commitKnockout(pivot, feeRange);
-        emit HaqqXKnockoutCross(pool, tick, isBid, merkle.pivotTime_, merkle.feeMileage_,
+        emit HaqqKnockoutCross(pool, tick, isBid, merkle.pivotTime_, merkle.feeMileage_,
                                KnockoutLiq.commitEntropySalt());
         pivot.deletePivot(); // Nice little SSTORE refund for the swapper
     }

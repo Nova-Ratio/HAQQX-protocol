@@ -9,7 +9,7 @@ import '../libraries/SwapCurve.sol';
 import '../libraries/CurveMath.sol';
 import '../libraries/CurveRoll.sol';
 import '../libraries/Chaining.sol';
-import '../interfaces/IHaqqXLpConduit.sol';
+import '../interfaces/IHaqqLpConduit.sol';
 import './PositionRegistrar.sol';
 import './LiquidityCurve.sol';
 import './LevelBook.sol';
@@ -22,7 +22,7 @@ import './AgentMask.sol';
  *         on a pre-loaded liquidity curve:
  *           1) Mint amibent liquidity
  *           2) Mint range liquidity
- *           3) Burn haqq liquidity
+ *           3) Burn haqqx liquidity
  *           4) Burn range liquidity
  *           5) Swap                                                     */
 contract TradeMatcher is PositionRegistrar, LiquidityCurve, KnockoutCounter,
@@ -42,17 +42,17 @@ contract TradeMatcher is PositionRegistrar, LiquidityCurve, KnockoutCounter,
     using Directives for Directives.ConcentratedDirective;
     using Chaining for Chaining.PairFlow;
 
-    /* @notice Mints haqq liquidity (i.e. liquidity that stays active at every
+    /* @notice Mints haqqx liquidity (i.e. liquidity that stays active at every
      *         price point) on to the curve.
      * 
      * @param curve The object representing the pre-loaded liquidity curve. Will be
      *              updated in memory after this call, but it's the caller's 
      *              responsbility to check it back into storage.
-     * @param liqAdded The amount of haqq liquidity being minted represented as
+     * @param liqAdded The amount of haqqx liquidity being minted represented as
      *                 sqrt(X*Y) where X,Y are the collateral reserves in a constant-
      *                 product AMM
      * @param poolHash The hash indexing the pool this liquidity curve applies to.
-     * @param lpOwner The address of the IHaqqXLpConduit the LP position will be 
+     * @param lpOwner The address of the IHaqqLpConduit the LP position will be 
      *                assigned to. (If zero the user will directly own the LP.)
      *
      * @return baseFlow The amount of base-side token collateral required by this
@@ -60,7 +60,7 @@ contract TradeMatcher is PositionRegistrar, LiquidityCurve, KnockoutCounter,
      *                  the user to the pool.
      * @return quoteFlow The amount of quote-side token collateral required by thhis
      *                   operation. */
-    function mintHaqq (CurveMath.CurveState memory curve, uint128 liqAdded, 
+    function mintHaqqX (CurveMath.CurveState memory curve, uint128 liqAdded, 
                           bytes32 poolHash, address lpOwner)
         internal returns (int128 baseFlow, int128 quoteFlow) {
         uint128 liqSeeds = mintPosLiq(lpOwner, poolHash, liqAdded,
@@ -71,20 +71,20 @@ contract TradeMatcher is PositionRegistrar, LiquidityCurve, KnockoutCounter,
         (baseFlow, quoteFlow) = signMintFlow(base, quote);
     }
 
-    /* @notice Like mintHaqq(), but the liquidity is permanetely locked into the pool,
+    /* @notice Like mintHaqqX(), but the liquidity is permanetely locked into the pool,
      *         and therefore cannot be later burned by the user. */
-    function lockHaqq (CurveMath.CurveState memory curve, uint128 liqAdded)
+    function lockHaqqX (CurveMath.CurveState memory curve, uint128 liqAdded)
         internal pure returns (int128, int128) {
         (uint128 base, uint128 quote) = liquidityReceivable(curve, liqAdded);
         return signMintFlow(base, quote);        
     }
 
-    /* @notice Burns haqq liquidity from the curve.
+    /* @notice Burns haqqx liquidity from the curve.
      * 
      * @param curve The object representing the pre-loaded liquidity curve. Will be
      *              updated in memory after this call, but it's the caller's 
      *              responsbility to check it back into storage.
-     * @param liqAdded The amount of haqq liquidity being minted represented as
+     * @param liqAdded The amount of haqqx liquidity being minted represented as
      *                 sqrt(X*Y) where X,Y are the collateral reserves in a constant-
      *                 product AMM
      * @param poolHash The hash indexing the pool this liquidity curve applies to.
@@ -94,7 +94,7 @@ contract TradeMatcher is PositionRegistrar, LiquidityCurve, KnockoutCounter,
      *                  the pool to the user.
      * @return quoteFlow The amount of quote-side token collateral returned by this
      *                   operation. */
-    function burnHaqq (CurveMath.CurveState memory curve, uint128 liqBurned, 
+    function burnHaqqX (CurveMath.CurveState memory curve, uint128 liqBurned, 
                           bytes32 poolHash, address lpOwner)
         internal returns (int128, int128) {
         uint128 liqSeeds = burnPosLiq(lpOwner, poolHash, liqBurned, curve.seedDeflator_);
@@ -112,11 +112,11 @@ contract TradeMatcher is PositionRegistrar, LiquidityCurve, KnockoutCounter,
      * @param prickTick The tick index of the curve's current price.
      * @param lowTick The tick index of the lower boundary of the range order.
      * @param highTick The tick index of the upper boundary of the range order.
-     * @param liqAdded The amount of haqq liquidity being minted represented as
+     * @param liqAdded The amount of haqqx liquidity being minted represented as
      *                 sqrt(X*Y) where X,Y are the collateral reserves in a constant-
      *                 product AMM
      * @param poolHash The hash indexing the pool this liquidity curve applies to.
-     * @param lpConduit The address of the IHaqqXLpConduit the LP position will be 
+     * @param lpConduit The address of the IHaqqLpConduit the LP position will be 
      *                  assigned to. (If zero the user will directly own the LP.)
      *
      * @return baseFlow The amount of base-side token collateral required by this
@@ -149,7 +149,7 @@ contract TradeMatcher is PositionRegistrar, LiquidityCurve, KnockoutCounter,
      * @param prickTick The tick index of the curve's current price.
      * @param lowTick The tick index of the lower boundary of the range order.
      * @param highTick The tick index of the upper boundary of the range order.
-     * @param liqAdded The amount of haqq liquidity being minted represented as
+     * @param liqAdded The amount of haqqx liquidity being minted represented as
      *                 sqrt(X*Y) where X,Y are the collateral reserves in a constant-
      *                 product AMM
      * @param poolHash The hash indexing the pool this liquidity curve applies to.
@@ -175,30 +175,30 @@ contract TradeMatcher is PositionRegistrar, LiquidityCurve, KnockoutCounter,
         return signBurnFlow(base, quote);
     }
 
-    /* @notice Dispatches the call to the IHaqqXLpConduit with the haqq liquidity 
+    /* @notice Dispatches the call to the IHaqqLpConduit with the haqqx liquidity 
      *         LP position that was minted. */
     function depositConduit (bytes32 poolHash, uint128 liqSeeds, uint64 deflator,
                              address lpConduit) private {
         // Equivalent to calling concentrated liquidity deposit with lowTick=0 and highTick=0
         // Since a true range order can never have a width of zero, the receiving deposit
-        // contract should recognize these values as always representing haqq liquidity
+        // contract should recognize these values as always representing haqqx liquidity
         int24 NA_LOW_TICK = 0;
         int24 NA_HIGH_TICK = 0;
         depositConduit(poolHash, NA_LOW_TICK, NA_HIGH_TICK, liqSeeds, deflator, lpConduit);
     }
 
-    /* @notice Dispatches the call to the IHaqqXLpConduit with the concentrated liquidity 
+    /* @notice Dispatches the call to the IHaqqLpConduit with the concentrated liquidity 
      *         LP position that was minted. */
     function depositConduit (bytes32 poolHash, int24 lowTick, int24 highTick,
                              uint128 liq, uint64 mileage, address lpConduit) private {
         if (lpConduit != lockHolder_) {
-            bool doesAccept = IHaqqXLpConduit(lpConduit).
-                depositHaqqXLiq(lockHolder_, poolHash, lowTick, highTick, liq, mileage);
+            bool doesAccept = IHaqqLpConduit(lpConduit).
+                depositHaqqLiq(lockHolder_, poolHash, lowTick, highTick, liq, mileage);
             require(doesAccept, "LP");
         }
     }
 
-    /* @notice Withdraws and sends ownership of the haqq liquidity to a third party conduit
+    /* @notice Withdraws and sends ownership of the haqqx liquidity to a third party conduit
      *         explicitly nominated by the caller. */
     function withdrawConduit (bytes32 poolHash, uint128 liqSeeds, uint64 deflator,
                               address lpConduit) private {
@@ -210,8 +210,8 @@ contract TradeMatcher is PositionRegistrar, LiquidityCurve, KnockoutCounter,
     function withdrawConduit (bytes32 poolHash, int24 lowTick, int24 highTick,
                               uint128 liq, uint64 mileage, address lpConduit) private {
         if (lpConduit != lockHolder_) {
-            bool doesAccept = IHaqqXLpConduit(lpConduit).
-                withdrawHaqqXLiq(lockHolder_, poolHash, lowTick, highTick, liq, mileage);
+            bool doesAccept = IHaqqLpConduit(lpConduit).
+                withdrawHaqqLiq(lockHolder_, poolHash, lowTick, highTick, liq, mileage);
             require(doesAccept, "LP");
         }
     }

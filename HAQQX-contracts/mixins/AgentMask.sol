@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 pragma experimental ABIEncoderV2;
 
 import "./StorageLayout.sol";
-import "../interfaces/IHaqqXCondOracle.sol";
+import "../interfaces/IHaqqCondOracle.sol";
 
 /* @title Agent mask mixin.
  * @notice Maps and manages surplus balances, nonces, and external router approvals
@@ -63,7 +63,7 @@ contract AgentMask is StorageLayout {
      *         signature. Regardless of which address is msg.sender, all operations inside
      *         this call will touch the positions, tokens, and liquidity owned by the
      *         signing address.  */
-    modifier reEntrantAgent (HaqqXRelayerCall memory call,
+    modifier reEntrantAgent (HaqqRelayerCall memory call,
                              bytes calldata signature) {
         require(lockHolder_ == address(0));
         lockHolder_ = lockSigner(call, signature);
@@ -72,7 +72,7 @@ contract AgentMask is StorageLayout {
         resetMsgVal();
     }
 
-    struct HaqqXRelayerCall {
+    struct HaqqRelayerCall {
         uint16 callpath;
         bytes cmd;
         bytes conds;
@@ -99,7 +99,7 @@ contract AgentMask is StorageLayout {
     
     /* @notice Given the order, evaluation conditionals, and off-chain signature, recovers
      *         the client address if valid or reverts the transactions. */
-    function lockSigner (HaqqXRelayerCall memory call,
+    function lockSigner (HaqqRelayerCall memory call,
                          bytes calldata signature) private returns (address client) {
         client = verifySignature(call, signature);
         checkRelayConditions(client, call.conds);
@@ -145,7 +145,7 @@ contract AgentMask is StorageLayout {
      *      the honest signature, in which case the call parameter would be rejected becaue it
      *      used an expired nonce. In no state of the world does a malleable signature make a 
      *      replay attack possible. */
-    function verifySignature (HaqqXRelayerCall memory call,
+    function verifySignature (HaqqRelayerCall memory call,
                               bytes calldata signature)
         internal view returns (address client) {
         (uint8 v, bytes32 r, bytes32 s) =
@@ -156,7 +156,7 @@ contract AgentMask is StorageLayout {
     }
     
     /* @notice Calculates the EIP-712 hash to check the signature against. */
-    function checksumHash (HaqqXRelayerCall memory call)
+    function checksumHash (HaqqRelayerCall memory call)
         private view returns (bytes32) {
         bytes32 hash = contentHash(call);
         return keccak256(abi.encodePacked
@@ -164,14 +164,14 @@ contract AgentMask is StorageLayout {
     }
 
     bytes32 constant CALL_SIG_HASH = 
-        keccak256("HaqqXRelayerCall(uint8 callpath,bytes cmd,bytes conds,bytes tip)");
+        keccak256("HaqqRelayerCall(uint8 callpath,bytes cmd,bytes conds,bytes tip)");
     bytes32 constant DOMAIN_SIG_HASH =
         keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
-    bytes32 constant APP_NAME_HASH = keccak256("HaqqXSwap");
+    bytes32 constant APP_NAME_HASH = keccak256("HaqqSwap");
     bytes32 constant VERSION_HASH = keccak256("1.0");
 
     /* @notice Calculates the EIP-712 typedStruct hash. */
-    function contentHash (HaqqXRelayerCall memory call)
+    function contentHash (HaqqRelayerCall memory call)
         private pure returns (bytes32) {
         return keccak256(
             abi.encode
@@ -228,12 +228,12 @@ contract AgentMask is StorageLayout {
      *                  unrelated streams. This value corresponds to the specific nonce
      *                  dimension.
      * @param nonce The nonce index value the nonce will be reset to.
-     * @param oracle The address of the external oracle (must conform to IHaqqXNonceOracle
+     * @param oracle The address of the external oracle (must conform to IHaqqNonceOracle
      *               interface.
      * @param args Arbitrary calldata passed to the oracle condition call. */
     function resetNonceCond (bytes32 salt, uint32 nonce, address oracle,
                              bytes memory args) internal {
-        bool canProceed = IHaqqXNonceOracle(oracle).checkHaqqXNonceSet
+        bool canProceed = IHaqqNonceOracle(oracle).checkHaqqNonceSet
             (lockHolder_, salt, nonce, args);
         require(canProceed, "ON");
         resetNonce(salt, nonce);
@@ -242,11 +242,11 @@ contract AgentMask is StorageLayout {
     /* @notice Flat call that checks an external oracle and reverts the transaction if the
      *         oracle call fails. Useful in a multicall context, where we want to pre-
      *         condition on some external requirement.
-     * @param oracle The address of the external oracle (must conform to IHaqqXCondOracle
+     * @param oracle The address of the external oracle (must conform to IHaqqCondOracle
      *               interface.
      * @param args Arbitrary calldata passed to the oracle condition call. */
     function checkGateOracle (address oracle, bytes memory args) internal {
-        bool canProceed = IHaqqXCondOracle(oracle).checkHaqqXCond
+        bool canProceed = IHaqqCondOracle(oracle).checkHaqqCond
             (lockHolder_, args);
         require(canProceed, "OG");
     }

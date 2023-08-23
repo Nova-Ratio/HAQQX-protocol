@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3
 
 pragma solidity 0.8.19;
-import "../HaqqXSwapDex.sol";
+import "../HaqqSwapDex.sol";
 
 import "hardhat/console.sol";
 
@@ -17,12 +17,12 @@ contract QueryHelper {
     function queryCurve (address base, address quote, uint256 poolIdx)
         public view returns (CurveMath.CurveState memory curve) {
         bytes32 key = PoolSpecs.encodeKey(base, quote, poolIdx);
-        bytes32 slot = keccak256(abi.encode(key, HaqqXSlots.CURVE_MAP_SLOT));
-        uint256 valOne = HaqqXSwapDex(dex_).readSlot(uint256(slot));
-        uint256 valTwo = HaqqXSwapDex(dex_).readSlot(uint256(slot)+1);
+        bytes32 slot = keccak256(abi.encode(key, HaqqSlots.CURVE_MAP_SLOT));
+        uint256 valOne = HaqqSwapDex(dex_).readSlot(uint256(slot));
+        uint256 valTwo = HaqqSwapDex(dex_).readSlot(uint256(slot)+1);
         
         curve.priceRoot_ = uint128((valOne << 128) >> 128);
-        curve.haqqSeeds_ = uint128(valOne >> 128);
+        curve.haqqxSeeds_ = uint128(valOne >> 128);
         curve.concLiq_ = uint128((valTwo << 128) >> 128);
         curve.seedDeflator_ = uint64((valTwo << 64) >> 192);
         curve.concGrowth_ = uint64(valTwo >> 192);
@@ -42,15 +42,15 @@ contract QueryHelper {
     function querySurplus (address owner, address token)
         public view returns (uint128 surplus) {
         bytes32 key = keccak256(abi.encode(owner, token));
-        bytes32 slot = keccak256(abi.encode(key, HaqqXSlots.BAL_MAP_SLOT));
-        uint256 val = HaqqXSwapDex(dex_).readSlot(uint256(slot));
+        bytes32 slot = keccak256(abi.encode(key, HaqqSlots.BAL_MAP_SLOT));
+        uint256 val = HaqqSwapDex(dex_).readSlot(uint256(slot));
         surplus = uint128((val << 128) >> 128);
     }
 
     function queryProtocolAccum (address token) public view returns (uint128) {
         bytes32 key = bytes32(uint256(uint160(token)));
-        bytes32 slot = keccak256(abi.encode(key, HaqqXSlots.FEE_MAP_SLOT));
-        uint256 val = HaqqXSwapDex(dex_).readSlot(uint256(slot));
+        bytes32 slot = keccak256(abi.encode(key, HaqqSlots.FEE_MAP_SLOT));
+        uint256 val = HaqqSwapDex(dex_).readSlot(uint256(slot));
         return uint128(val);
     }
 
@@ -58,8 +58,8 @@ contract QueryHelper {
         public view returns (uint96 bidLots, uint96 askLots, uint64 odometer) {
         bytes32 poolHash = PoolSpecs.encodeKey(base, quote, poolIdx);
         bytes32 key = keccak256(abi.encodePacked(poolHash, tick));
-        bytes32 slot = keccak256(abi.encode(key, HaqqXSlots.LVL_MAP_SLOT));
-        uint256 val = HaqqXSwapDex(dex_).readSlot(uint256(slot));
+        bytes32 slot = keccak256(abi.encode(key, HaqqSlots.LVL_MAP_SLOT));
+        uint256 val = HaqqSwapDex(dex_).readSlot(uint256(slot));
 
         odometer = uint64(val >> 192);
         askLots = uint96((val << 64) >> 160);

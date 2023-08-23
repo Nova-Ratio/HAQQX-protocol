@@ -21,7 +21,7 @@ contract DepositDesk is SettleLayer {
      *         popMsgVal() function. If called more than once in a single transction
      *         popMsgVal() will revert. Therefore if calling depositSurplus() on native ETH
      *         be aware than calling more than once in a single transaction result in the top-
-     *         level HaqqXSwapDex contract call failing and reverting.
+     *         level HaqqSwapDex contract call failing and reverting.
      *
      * @param recv The address of the owner associated with the account.
      * @param value The amount to be collected from owner and deposited.

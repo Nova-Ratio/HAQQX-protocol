@@ -71,23 +71,23 @@ library Directives {
     /* @notice Along with a root open tick from above defines a single range order mint
      *         or burn action.
 
-    /* @notice Defines a directive related to the mint/burn of haqq liquidity on a 
+    /* @notice Defines a directive related to the mint/burn of haqqx liquidity on a 
      *         single pre-specified curve.
      *
-     * @dev A directive indicating no haqq mint/burn must set *both* isAdd to false and
+     * @dev A directive indicating no haqqx mint/burn must set *both* isAdd to false and
      *      liquidity to zero. liquidity=0 alone will indicate the use of a flxeible 
      *      back-filled rolling quantity in place.
      *
-     * @param isAdd_ If true, the action mints new haqq liquidity. If false, burns 
+     * @param isAdd_ If true, the action mints new haqqx liquidity. If false, burns 
      *               pre-existing liquidity in the curve.
      * @param rollType_  The flavor of rolling gap fill that should be applied (if any)
      *                   to this leg of the directive. See Chaining.sol for list of
      *                   rolling type codes.
-     * @param liquidity_ The total amount of haqq liquidity to add/remove.
+     * @param liquidity_ The total amount of haqqx liquidity to add/remove.
      *                   Represented as the equivalent of sqrt(X*Y) liquidity for a
      *                   constant-product AMM curve. (If this and rollType_ are zero,
      *                   this is a non-action.) */
-    struct HaqqDirective {
+    struct HaqqXDirective {
         bool isAdd_;
         uint8 rollType_;
         uint128 liquidity_;
@@ -109,14 +109,14 @@ library Directives {
      *         pool within a pre-specified pair.
      * @param poolIdx_ The pool type index that identified the pool to be operated on in
      *                 this pair.
-     * @param haqq_ Directive related to haqq liquidity actions (if any).
+     * @param haqqx_ Directive related to haqqx liquidity actions (if any).
      * @param conc_ Directives related to concentrated liquidity range orders (if any).
      * @param swap_ Directive for the swap action on the pool (if any).
      * @param chain_ Flags related to chaining order of the directive actions and how
      *               rolling back fill is calculated. */
     struct PoolDirective {
         uint256 poolIdx_;
-        HaqqDirective haqq_;
+        HaqqXDirective haqqx_;
         ConcentratedDirective[] conc_;
         SwapDirective swap_;
         ChainingFlags chain_;

@@ -30,7 +30,7 @@ contract PositionRegistrar is PoolRegistry {
      * same owner and the same range, it can be represented by incrementing 5 and 
      * updating 6. */
 
-    /* @notice Hashes the owner of an haqq liquidity position to the position key. */
+    /* @notice Hashes the owner of an haqqx liquidity position to the position key. */
     function encodePosKey (address owner, bytes32 poolIdx)
         internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(owner, poolIdx));
@@ -51,10 +51,10 @@ contract PositionRegistrar is PoolRegistry {
         return positions_[encodePosKey(owner, poolIdx, lowerTick, upperTick)];
     }
 
-    /* @notice Returns the current position associated with the owner's haqq 
+    /* @notice Returns the current position associated with the owner's haqqx 
      *         position. If nothing exists the result will have zero liquidity. */
     function lookupPosition (address owner, bytes32 poolIdx)
-        internal view returns (HaqqPosition storage) {
+        internal view returns (HaqqXPosition storage) {
         return ambPositions_[encodePosKey(owner, poolIdx)];
     }
 
@@ -85,21 +85,21 @@ contract PositionRegistrar is PoolRegistry {
         return decrementLiq(pos, burnLiq, feeMileage);
     }
 
-    /* @notice Removes all or some liquidity associated with a an haqq position. 
+    /* @notice Removes all or some liquidity associated with a an haqqx position. 
      *         
      * @param owner The bytes32 owning the position.
      * @param poolIdx The hash key of the pool the position lives on.
      * @param burnLiq The amount of liquidity to remove from the position. Caller is free
      *                to oversize this number and it will just cap at the position size.
-     * @param haqqGrowth The up-to-date haqq liquidity seed deflator for the curve.
+     * @param haqqxGrowth The up-to-date haqqx liquidity seed deflator for the curve.
      *
-     * @return burnSeeds The total number of haqq seeds that have been removed with
+     * @return burnSeeds The total number of haqqx seeds that have been removed with
      *                   this operation. */
     function burnPosLiq (address owner, bytes32 poolIdx, uint128 burnLiq,
-                         uint64 haqqGrowth)
+                         uint64 haqqxGrowth)
         internal returns (uint128 burnSeeds) {
-        HaqqPosition storage pos = lookupPosition(owner, poolIdx);
-        burnSeeds = burnLiq.deflateLiqSeed(haqqGrowth);
+        HaqqXPosition storage pos = lookupPosition(owner, poolIdx);
+        burnSeeds = burnLiq.deflateLiqSeed(haqqxGrowth);
 
         if (burnSeeds >= pos.seeds_) {
             burnSeeds = pos.seeds_;
@@ -147,7 +147,7 @@ contract PositionRegistrar is PoolRegistry {
      * @param upperTick The upper tick of the LP position.
      * @param feeMileage The current accumulated fee rewards rate for the position range
      *
-     * @return rewards The total number of haqq seeds to collect as rewards */
+     * @return rewards The total number of haqqx seeds to collect as rewards */
     function harvestPosLiq (address owner, bytes32 poolIdx, int24 lowerTick,
                             int24 upperTick, uint64 feeMileage)
         internal returns (uint128 rewards) {        
@@ -192,20 +192,20 @@ contract PositionRegistrar is PoolRegistry {
         incrementPosLiq(pos, liqAdd, feeMileage);
     }
     
-    /* @notice Adds haqq liquidity to a give position, creating a new position tracker
+    /* @notice Adds haqqx liquidity to a give position, creating a new position tracker
      *         if necessry.
      *         
      * @param owner The address of the owner of the liquidity position.
      * @param poolIdx The hash key of the pool the position lives on.
      * @param liqAdd The amount of liquidity to add to the position.
-     * @param haqqGrowth The up-to-date haqq liquidity seed deflator for the curve.
+     * @param haqqxGrowth The up-to-date haqqx liquidity seed deflator for the curve.
      *
-     * @return seeds The total number of haqq seeds that this incremental liquidity
+     * @return seeds The total number of haqqx seeds that this incremental liquidity
      *               corresponds to. */
     function mintPosLiq (address owner, bytes32 poolIdx, uint128 liqAdd,
-                         uint64 haqqGrowth) internal returns (uint128 seeds) {
-        HaqqPosition storage pos = lookupPosition(owner, poolIdx);
-        seeds = liqAdd.deflateLiqSeed(haqqGrowth);
+                         uint64 haqqxGrowth) internal returns (uint128 seeds) {
+        HaqqXPosition storage pos = lookupPosition(owner, poolIdx);
+        seeds = liqAdd.deflateLiqSeed(haqqxGrowth);
         pos.seeds_ = pos.seeds_.addLiq(seeds);
         pos.timestamp_ = SafeCast.timeUint32(); // Increase liquidity loses time priority.
     }

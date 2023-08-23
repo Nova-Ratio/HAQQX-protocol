@@ -9,10 +9,10 @@ import './StorageLayout.sol';
 
 /* @title Protocol Account Mixin
  * @notice Tracks and pays out the accumulated protocol fees across the entire exchange 
- *         These are the fees belonging to the HaqqXSwap protocol, not the liquidity 
+ *         These are the fees belonging to the HaqqSwap protocol, not the liquidity 
  *         miners.
  * @dev Unlike liquidity fees, protocol fees are accumulated as resting tokens 
- *      instead of haqq liquidity. */
+ *      instead of haqqx liquidity. */
 contract ProtocolAccount is StorageLayout  {
     using SafeCast for uint256;
     using TokenFlow for address;

@@ -13,19 +13,9 @@ import '../mixins/MarketSequencer.sol';
 import '../mixins/StorageLayout.sol';
 import '../mixins/ProtocolAccount.sol';
 import '../mixins/DepositDesk.sol';
-import '../interfaces/IHaqqXMinion.sol';
-import '../HaqqXEvents.sol';
+import '../interfaces/IHaqqMinion.sol';
+import '../HaqqEvents.sol';
 
-/* @title Cold path callpath sidecar.
- * @notice Defines a proxy sidecar contract that's used to move code outside the 
- *         main contract to avoid Ethereum's contract code size limit. Contains
- *         top-level logic for non trade related logic, including protocol control,
- *         pool initialization, and surplus collateral payment. 
- * 
- * @dev    This exists as a standalone contract but will only ever contain proxy code,
- *         not state. As such it should never be called directly or externally, and should
- *         only be invoked with DELEGATECALL so that it operates on the contract state
- *         within the primary HaqqXSwap contract. */
 contract ColdPath is MarketSequencer, DepositDesk, ProtocolAccount {
     using SafeCast for uint128;
     using TokenFlow for TokenFlow.PairSeq;
@@ -33,54 +23,10 @@ contract ColdPath is MarketSequencer, DepositDesk, ProtocolAccount {
     using Chaining for Chaining.PairFlow;
     using ProtocolCmd for bytes;
 
-    /* @notice Consolidated method for protocol control related commands. */
-    function protocolCmd (bytes calldata cmd) virtual public {
-        uint8 code = uint8(cmd[31]);
-
-        if (code == UserCmd.INIT_POOL_CODE) {
-            initPool(cmd);
-        } else if (code == ProtocolCmd.DISABLE_TEMPLATE_CODE) {
-            disableTemplate(cmd);
-        } else if (code == ProtocolCmd.POOL_TEMPLATE_CODE) {
-            setTemplate(cmd);
-        } else if (code == ProtocolCmd.POOL_REVISE_CODE) {
-            revisePool(cmd);
-        } else if (code == ProtocolCmd.SET_TAKE_CODE) {
-            setTakeRate(cmd);
-        } else if (code == ProtocolCmd.RELAYER_TAKE_CODE) {
-            setRelayerTakeRate(cmd);
-        } else if (code == ProtocolCmd.RESYNC_TAKE_CODE) {
-            resyncTakeRate(cmd);
-        } else if (code == ProtocolCmd.INIT_POOL_LIQ_CODE) {
-            setNewPoolLiq(cmd);
-        } else if (code == ProtocolCmd.OFF_GRID_CODE) {
-            pegPriceImprove(cmd);
-        } else {
-            sudoCmd(cmd);
-        }
+    function acceptHaqqProxyRole (address, uint16 slot) public virtual returns (bool) {
+        return slot == HaqqSlots.COLD_PROXY_IDX;
     }
 
-    /* @notice Subset of highly privileged commands that are only allowed to run in sudo
-     *         mode. */
-    function sudoCmd (bytes calldata cmd) internal {
-        require(sudoMode_, "Sudo");
-        uint8 cmdCode = uint8(cmd[31]);
-        
-        if (cmdCode == ProtocolCmd.COLLECT_TREASURY_CODE) {
-            collectProtocol(cmd);
-        } else if (cmdCode == ProtocolCmd.SET_TREASURY_CODE) {
-            setTreasury(cmd);
-        } else if (cmdCode == ProtocolCmd.AUTHORITY_TRANSFER_CODE) {
-            transferAuthority(cmd);
-        } else if (cmdCode == ProtocolCmd.HOT_OPEN_CODE) {
-            setHotPathOpen(cmd);
-        } else if (cmdCode == ProtocolCmd.SAFE_MODE_CODE) {
-            setSafeMode(cmd);
-        } else {
-            revert("Invalid command");
-        }
-    }
-    
     function userCmd (bytes calldata cmd) virtual public payable {
         uint8 cmdCode = uint8(cmd[31]);
         
@@ -110,12 +56,49 @@ contract ColdPath is MarketSequencer, DepositDesk, ProtocolAccount {
 
     }
     
-    /* @notice Initializes the pool type for the pair.
-     * @param base The base token in the pair.
-     * @param quote The quote token in the pair.
-     * @param poolIdx The index of the pool type to initialize.
-     * @param price The price to initialize the pool. Represented as square root price in
-     *              Q64.64 notation. */
+    function sudoCmd (bytes calldata cmd) internal {
+        require(sudoMode_, "Sudo");
+        uint8 cmdCode = uint8(cmd[31]);
+        
+        if (cmdCode == ProtocolCmd.COLLECT_TREASURY_CODE) {
+            collectProtocol(cmd);
+        } else if (cmdCode == ProtocolCmd.SET_TREASURY_CODE) {
+            setTreasury(cmd);
+        } else if (cmdCode == ProtocolCmd.AUTHORITY_TRANSFER_CODE) {
+            transferAuthority(cmd);
+        } else if (cmdCode == ProtocolCmd.HOT_OPEN_CODE) {
+            setHotPathOpen(cmd);
+        } else if (cmdCode == ProtocolCmd.SAFE_MODE_CODE) {
+            setSafeMode(cmd);
+        } else {
+            revert("Invalid command");
+        }
+    }
+
+    function protocolCmd (bytes calldata cmd) virtual public {
+        uint8 code = uint8(cmd[31]);
+
+        if (code == ProtocolCmd.DISABLE_TEMPLATE_CODE) {
+            disableTemplate(cmd);
+        } else if (code == ProtocolCmd.POOL_TEMPLATE_CODE) {
+            setTemplate(cmd);
+        } else if (code == ProtocolCmd.POOL_REVISE_CODE) {
+            revisePool(cmd);
+        } else if (code == ProtocolCmd.SET_TAKE_CODE) {
+            setTakeRate(cmd);
+        } else if (code == ProtocolCmd.RELAYER_TAKE_CODE) {
+            setRelayerTakeRate(cmd);
+        } else if (code == ProtocolCmd.RESYNC_TAKE_CODE) {
+            resyncTakeRate(cmd);
+        } else if (code == ProtocolCmd.INIT_POOL_LIQ_CODE) {
+            setNewPoolLiq(cmd);
+        } else if (code == ProtocolCmd.OFF_GRID_CODE) {
+            pegPriceImprove(cmd);
+        } else {
+            sudoCmd(cmd);
+        }
+    }
+    
     function initPool (bytes calldata cmd) private {
         (, address base, address quote, uint256 poolIdx, uint128 price) =
             abi.decode(cmd, (uint8, address,address,uint256,uint128));
@@ -129,31 +112,18 @@ contract ColdPath is MarketSequencer, DepositDesk, ProtocolAccount {
         settleInitFlow(lockHolder_, base, baseFlow, quote, quoteFlow);
     }
 
-    /* @notice Disables an existing pool template. Any previously instantiated pools on
-     *         this template will continue exist, but calling this will prevent any new
-     *         pools from being created on this template. */
     function disableTemplate (bytes calldata input) private {
         (, uint256 poolIdx) = abi.decode(input, (uint8, uint256));
-        emit HaqqXEvents.DisablePoolTemplate(poolIdx);
+        emit HaqqEvents.DisablePoolTemplate(poolIdx);
         disablePoolTemplate(poolIdx);
     }
-
-
-
     
-    /* @notice Sets template parameters for a pool type index.
-     * @param poolIdx The index of the pool type.
-     * @param feeRate The pool's swap fee rate in multiples of 0.0001%
-     * @param tickSize The pool's grid size in ticks.
-     * @param jitThresh The minimum resting time (in seconds) for concentrated LPs.
-     * @param knockout The knockout bits for the pool template.
-     @ @param oracleFlags The oracle bit flags if a permissioned pool. */
     function setTemplate (bytes calldata input) private {
         (, uint256 poolIdx, uint16 feeRate, uint16 tickSize, uint8 jitThresh,
          uint8 knockout, uint8 oracleFlags) =
             abi.decode(input, (uint8, uint256, uint16, uint16, uint8, uint8, uint8));
         
-        emit HaqqXEvents.SetPoolTemplate(poolIdx, feeRate, tickSize, jitThresh, knockout,
+        emit HaqqEvents.SetPoolTemplate(poolIdx, feeRate, tickSize, jitThresh, knockout,
                                         oracleFlags);
         setPoolTemplate(poolIdx, feeRate, tickSize, jitThresh, knockout, oracleFlags);
     }
@@ -162,7 +132,7 @@ contract ColdPath is MarketSequencer, DepositDesk, ProtocolAccount {
         (, uint8 takeRate) = 
             abi.decode(input, (uint8, uint8));
         
-        emit HaqqXEvents.SetTakeRate(takeRate);
+        emit HaqqEvents.SetTakeRate(takeRate);
         setProtocolTakeRate(takeRate);
     }
 
@@ -170,7 +140,7 @@ contract ColdPath is MarketSequencer, DepositDesk, ProtocolAccount {
         (, uint8 takeRate) = 
             abi.decode(input, (uint8, uint8));
 
-        emit HaqqXEvents.SetRelayerTakeRate(takeRate);
+        emit HaqqEvents.SetRelayerTakeRate(takeRate);
         setRelayerTakeRate(takeRate);
     }
 
@@ -178,7 +148,7 @@ contract ColdPath is MarketSequencer, DepositDesk, ProtocolAccount {
         (, uint128 liq) = 
             abi.decode(input, (uint8, uint128));
         
-        emit HaqqXEvents.SetNewPoolLiq(liq);
+        emit HaqqEvents.SetNewPoolLiq(liq);
         setNewPoolLiq(liq);
     }
 
@@ -186,19 +156,10 @@ contract ColdPath is MarketSequencer, DepositDesk, ProtocolAccount {
         (, address base, address quote, uint256 poolIdx) = 
             abi.decode(input, (uint8, address, address, uint256));
         
-        emit HaqqXEvents.ResyncTakeRate(base, quote, poolIdx, protocolTakeRate_);
+        emit HaqqEvents.ResyncTakeRate(base, quote, poolIdx, protocolTakeRate_);
         resyncProtocolTake(base, quote, poolIdx);
     }
 
-    /* @notice Update parameters for a pre-existing pool.
-     * @param base The base-side token defining the pool's pair.
-     * @param quote The quote-side token defining the pool's pair.
-     * @param poolIdx The index of the pool type.
-     * @param feeRate The pool's swap fee rate in multiples of 0.0001%
-     * @param tickSize The pool's grid size in ticks.
-     * @param jitThresh The minimum resting time (in seconds) for concentrated LPs in
-     *                  in the pool.
-     * @param knockout The knockout bit flags for the pool. */
     function revisePool (bytes calldata cmd) private {
         (, address base, address quote, uint256 poolIdx,
          uint16 feeRate, uint16 tickSize, uint8 jitThresh, uint8 knockout) =
@@ -206,50 +167,40 @@ contract ColdPath is MarketSequencer, DepositDesk, ProtocolAccount {
         setPoolSpecs(base, quote, poolIdx, feeRate, tickSize, jitThresh, knockout);
     }
 
-    /* @notice Set off-grid price improvement.
-     * @param token The token the settings apply to.
-     * @param unitTickCollateral The collateral threshold for off-grid price improvement.
-     * @param awayTickTol The maximum tick distance from current price that off-grid
-     *                    quotes are allowed for. */
     function pegPriceImprove (bytes calldata cmd) private {
         (, address token, uint128 unitTickCollateral, uint16 awayTickTol) =
             abi.decode(cmd, (uint8, address, uint128, uint16));
-        emit HaqqXEvents.PriceImproveThresh(token, unitTickCollateral, awayTickTol);
+        emit HaqqEvents.PriceImproveThresh(token, unitTickCollateral, awayTickTol);
         setPriceImprove(token, unitTickCollateral, awayTickTol);
     }
 
     function setHotPathOpen (bytes calldata cmd) private {
         (, bool open) = abi.decode(cmd, (uint8, bool));
-        emit HaqqXEvents.HotPathOpen(open);
+        emit HaqqEvents.HotPathOpen(open);
         hotPathOpen_ = open;        
     }
 
     function setSafeMode (bytes calldata cmd) private {
         (, bool inSafeMode) = abi.decode(cmd, (uint8, bool));
-        emit HaqqXEvents.SafeMode(inSafeMode);
+        emit HaqqEvents.SafeMode(inSafeMode);
         inSafeMode_ = inSafeMode;        
     }
 
-    /* @notice Pays out the the protocol fees.
-     * @param token The token for which the accumulated fees are being paid out. 
-     *              (Or if 0x0 pays out native Ethereum.) */
     function collectProtocol (bytes calldata cmd) private {
         (, address token) = abi.decode(cmd, (uint8, address));
 
         require(block.timestamp >= treasuryStartTime_, "Treasury start");
-        emit HaqqXEvents.ProtocolDividend(token, treasury_);
+        emit HaqqEvents.ProtocolDividend(token, treasury_);
         disburseProtocolFees(treasury_, token);
     }
 
-    /* @notice Sets the treasury address to receive protocol fees. Once set, the treasury cannot
-     *         receive fees until 7 days after. */
     function setTreasury (bytes calldata cmd) private {
         (, address treasury) = abi.decode(cmd, (uint8, address));
 
         require(treasury != address(0) && treasury.code.length != 0, "Treasury invalid");
         treasury_ = treasury;
         treasuryStartTime_ = uint64(block.timestamp + 7 days);
-        emit HaqqXEvents.TreasurySet(treasury_, treasuryStartTime_);
+        emit HaqqEvents.TreasurySet(treasury_, treasuryStartTime_);
     }
 
     function transferAuthority (bytes calldata cmd) private {
@@ -257,19 +208,12 @@ contract ColdPath is MarketSequencer, DepositDesk, ProtocolAccount {
             abi.decode(cmd, (uint8, address));
 
         require(auth != address(0) && auth.code.length > 0 && 
-            IHaqqXMaster(auth).acceptsHaqqXAuthority(), "Invalid Authority");
+            IHaqqMaster(auth).acceptsHaqqAuthority(), "Invalid Authority");
         
-        emit HaqqXEvents.AuthorityTransfer(authority_);
+        emit HaqqEvents.AuthorityTransfer(authority_);
         authority_ = auth;
     }
 
-    /* @notice Used to directly pay out or pay in surplus collateral.
-     * @param recv The address where the funds are paid to (only applies if surplus was
-     *             paid out.)
-     * @param value The amount of surplus collateral being paid or received. If negative
-     *              paid from the user into the pool, increasing their balance.
-     * @param token The token to which the surplus collateral is applied. (If 0x0, then
-     *              native Ethereum) */
     function depositSurplus (bytes calldata cmd) private {
         (, address recv, uint128 value, address token) =
             abi.decode(cmd, (uint8, address, uint128, address));
@@ -320,25 +264,15 @@ contract ColdPath is MarketSequencer, DepositDesk, ProtocolAccount {
         checkGateOracle(oracle, args);
     }
 
-    /* @notice Called by a user to give permissions to an external smart contract router.
-     * @param router The address of the external smart contract that the user is giving
-     *                permission to.
-     * @param nCalls The number of calls the router agent is approved for.
-     * @param callpaths The proxy sidecar indexes the router is approved for */
     function approveRouter (bytes calldata cmd) private {
         (, address router, uint32 nCalls, uint16[] memory callpaths) =
             abi.decode(cmd, (uint8, address, uint32, uint16[]));
 
         for (uint i = 0; i < callpaths.length; ++i) {
-            require(callpaths[i] != HaqqXSlots.COLD_PROXY_IDX, "Invalid Router Approve");
+            require(callpaths[i] != HaqqSlots.COLD_PROXY_IDX, "Invalid Router Approve");
             approveAgent(router, nCalls, callpaths[i]);
         }
     }
 
-    /* @notice Used at upgrade time to verify that the contract is a valid HaqqX sidecar proxy and used
-     *         in the correct slot. */
-    function acceptHaqqXProxyRole (address, uint16 slot) public virtual returns (bool) {
-        return slot == HaqqXSlots.COLD_PROXY_IDX;
-    }
 }
 

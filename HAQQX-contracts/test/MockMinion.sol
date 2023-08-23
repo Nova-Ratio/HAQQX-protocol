@@ -2,9 +2,9 @@
 
 pragma solidity 0.8.19;
 
-import "../interfaces/IHaqqXMinion.sol";
+import "../interfaces/IHaqqMinion.sol";
 
-contract MockMinion is IHaqqXMinion {
+contract MockMinion is IHaqqMinion {
 
     bytes[] public userCmds_;
     bytes[] public protoCmds_;
@@ -28,10 +28,10 @@ contract MockMinion is IHaqqXMinion {
         return abi.encode();
     }
 
-    function acceptHaqqXDex() public pure returns (bool) { return true; }
+    function acceptHaqqDex() public pure returns (bool) { return true; }
 }
 
-contract MockMaster is IHaqqXMaster {
+contract MockMaster is IHaqqMaster {
 
     address dex_;
 
@@ -40,8 +40,8 @@ contract MockMaster is IHaqqXMaster {
     }
 
     function protocolCmd (uint16 proxyPath, bytes calldata cmd, bool sudo) public payable {
-        IHaqqXMinion(dex_).protocolCmd(proxyPath, cmd, sudo);
+        IHaqqMinion(dex_).protocolCmd(proxyPath, cmd, sudo);
     }
 
-    function acceptsHaqqXAuthority() override external pure returns (bool) { return true; }
+    function acceptsHaqqAuthority() override external pure returns (bool) { return true; }
 }

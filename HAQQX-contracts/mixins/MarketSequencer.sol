@@ -83,7 +83,7 @@ contract MarketSequencer is TradeMatcher {
      *                 price falls outside this point, the transaction is reverted.
      * @param maxPrice The maximum acceptable curve price to mint liquidity. If curve
      *                 price falls outside this point, the transaction is reverted.
-     * @param lpConduit The address of the IHaqqXLpConduit that the liquidity will be
+     * @param lpConduit The address of the IHaqqLpConduit that the liquidity will be
      *                  assigned to (0 for user owned liquidity).
      *
      * @return baseFlow The total amount of base-side token collateral that must be
@@ -165,7 +165,7 @@ contract MarketSequencer is TradeMatcher {
         commitCurve(pool.hash_, curve);
     }
 
-    /* @notice Mints haqq liquidity on to the pool's curve.
+    /* @notice Mints haqqx liquidity on to the pool's curve.
      *
      * @param liq The amount of liquidity being minted represented as the equivalent to
      *            sqrt(X*Y) in a constant product AMM pool.
@@ -174,7 +174,7 @@ contract MarketSequencer is TradeMatcher {
      *                 price falls outside this point, the transaction is reverted.
      * @param maxPrice The maximum acceptable curve price to mint liquidity. If curve
      *                 price falls outside this point, the transaction is reverted.
-     * @param lpConduit The address of the IHaqqXLpConduit that the liquidity will be
+     * @param lpConduit The address of the IHaqqLpConduit that the liquidity will be
      *                  assigned to (0 for user owned liquidity).
      *
      * @return baseFlow The total amount of base-side token collateral that must be
@@ -188,12 +188,12 @@ contract MarketSequencer is TradeMatcher {
         CurveMath.CurveState memory curve = snapCurveInRange
             (pool.hash_, minPrice, maxPrice);
         (baseFlow, quoteFlow) =
-            mintHaqq(curve, liq, pool.hash_, lpConduit);
+            mintHaqqX(curve, liq, pool.hash_, lpConduit);
         commitCurve(pool.hash_, curve);
     }
 
     
-    /* @notice Burns haqq liquidity on to the pool's curve.
+    /* @notice Burns haqqx liquidity on to the pool's curve.
      *
      * @param liq The amount of liquidity to burn represented as the equivalent to
      *            sqrt(X*Y) in a constant product AMM pool.
@@ -214,7 +214,7 @@ contract MarketSequencer is TradeMatcher {
         CurveMath.CurveState memory curve = snapCurveInRange
             (pool.hash_, minPrice, maxPrice);
         (baseFlow, quoteFlow) =
-            burnHaqq(curve, liq, pool.hash_, lpConduit);
+            burnHaqqX(curve, liq, pool.hash_, lpConduit);
         commitCurve(pool.hash_, curve);
     }
 
@@ -227,7 +227,7 @@ contract MarketSequencer is TradeMatcher {
      * @param pool The pre-loaded speciication and hash of the pool to be swapped against.
      * @param price The initial price to set the curve at. Represented as the square root
      *              of price in Q64.64 fixed point.
-     * @param initLiq The initial haqq liquidity commitment that will be permanetely 
+     * @param initLiq The initial haqqx liquidity commitment that will be permanetely 
      *                locked in the pool. Represeted as sqrt(X*Y) constant-product AMM
      *                liquidity.
      *
@@ -242,7 +242,7 @@ contract MarketSequencer is TradeMatcher {
         CurveMath.CurveState memory curve = snapCurveInit(pool.hash_);
         initPrice(curve, price);
         if (initLiq == 0) { initLiq = 1; }
-        (baseFlow, quoteFlow) = lockHaqq(curve, initLiq);
+        (baseFlow, quoteFlow) = lockHaqqX(curve, initLiq);
         commitCurve(pool.hash_, curve);
     }
 
@@ -254,7 +254,7 @@ contract MarketSequencer is TradeMatcher {
         if (!dir.chain_.swapDefer_) {
             applySwap(flow, dir.swap_, curve, cntx);
         }
-        applyHaqq(flow, dir.haqq_, curve, cntx);
+        applyHaqqX(flow, dir.haqqx_, curve, cntx);
         applyConcentrated(flow, dir.conc_, curve, cntx);
         if (dir.chain_.swapDefer_) {
             applySwap(flow, dir.swap_, curve, cntx);
@@ -272,17 +272,17 @@ contract MarketSequencer is TradeMatcher {
         }
     }
 
-    /* @notice Applies an haqq liquidity directive to a pre-loaded liquidity curve. */
-    function applyHaqq (Chaining.PairFlow memory flow,
-                           Directives.HaqqDirective memory dir,
+    /* @notice Applies an haqqx liquidity directive to a pre-loaded liquidity curve. */
+    function applyHaqqX (Chaining.PairFlow memory flow,
+                           Directives.HaqqXDirective memory dir,
                            CurveCache.Cache memory curve,
                            Chaining.ExecCntx memory cntx) private {
         cntx.roll_.plugLiquidity(dir, curve.curve_, flow);
         
         if (dir.liquidity_ > 0) {
             (int128 base, int128 quote) = dir.isAdd_ ?
-                callMintHaqq(curve, dir.liquidity_, cntx.pool_.hash_) :
-                callBurnHaqq(curve, dir.liquidity_, cntx.pool_.hash_);
+                callMintHaqqX(curve, dir.liquidity_, cntx.pool_.hash_) :
+                callBurnHaqqX(curve, dir.liquidity_, cntx.pool_.hash_);
         
             flow.accumFlow(base, quote);
         }

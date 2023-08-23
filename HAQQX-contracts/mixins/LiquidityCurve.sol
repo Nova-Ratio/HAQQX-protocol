@@ -90,12 +90,12 @@ contract LiquidityCurve is StorageLayout {
     }
 
     /* @notice Equivalent to above, but used when adding non-range bound constant 
-     *         product haqq liquidity.
+     *         product haqqx liquidity.
      * @dev Like above, it's the caller's responsibility to collect the necessary 
      *      collateral to add to the pool.
      *
-     * @param curve The liquidity curve object that haqq liquidity will be added to.
-     * @param seeds The number of haqq seeds being added. Note that this is 
+     * @param curve The liquidity curve object that haqqx liquidity will be added to.
+     * @param seeds The number of haqqx seeds being added. Note that this is 
      *              denominated as seeds *not* liquidity. The amount of liquidity
      *              contributed will be based on the current seed->liquidity conversion
      *              rate on the curve. (See CurveMath.sol.)
@@ -104,7 +104,7 @@ contract LiquidityCurve is StorageLayout {
     function liquidityReceivable (CurveMath.CurveState memory curve, uint128 seeds) 
         internal pure returns (uint128, uint128) {
         (uint128 base, uint128 quote) = liquidityFlows(curve, seeds);
-        bumpHaqq(curve, seeds);
+        bumpHaqqX(curve, seeds);
         return chargeConservative(base, quote, true);
     }
 
@@ -123,9 +123,9 @@ contract LiquidityCurve is StorageLayout {
      *                  reserves of a constant product AMM.
      * @param rewardRate The total cumulative earned but unclaimed rewards on the staked
      *                   liquidity. Used to increment the payout with the rewards, and
-     *                   burn the haqq liquidity tied to the rewards. (See 
+     *                   burn the haqqx liquidity tied to the rewards. (See 
      *                   CurveMath.sol for more.) Represented as a 128-bit fixed point
-     *                   cumulative growth rate of haqq seeds per unit of liquidity.
+     *                   cumulative growth rate of haqqx seeds per unit of liquidity.
      * @param lowerTick The tick index corresponding to the bottom of the concentrated 
      *                  liquidity range.
      * @param upperTick The tick index corresponding to the bottom of the concentrated 
@@ -175,12 +175,12 @@ contract LiquidityCurve is StorageLayout {
         bumpConcentrated(curve, -(liquidity.toInt128Sign()), inRange);
     }
 
-    /* @notice Same as above liquidityPayable() but used for non-range based haqq
+    /* @notice Same as above liquidityPayable() but used for non-range based haqqx
      *         constant product liquidity.
      *
-     * @param curve The liquidity curve object that haqq liquidity will be 
+     * @param curve The liquidity curve object that haqqx liquidity will be 
      *              removed from.
-     * @param seeds The number of haqq seeds being added. Note that this is 
+     * @param seeds The number of haqqx seeds being added. Note that this is 
      *              denominated as seeds *not* liquidity. The amount of liquidity
      *              contributed will be based on the current seed->liquidity conversion
      *              rate on the curve. (See CurveMath.sol.) 
@@ -193,7 +193,7 @@ contract LiquidityCurve is StorageLayout {
     function liquidityPayable (CurveMath.CurveState memory curve, uint128 seeds)
         internal pure returns (uint128 base, uint128 quote) {
         (base, quote) = liquidityFlows(curve, seeds);
-        bumpHaqq(curve, -(seeds.toInt128Sign()));
+        bumpHaqqX(curve, -(seeds.toInt128Sign()));
     }
 
     function liquidityHeldPayable (CurveMath.CurveState memory curve, uint128 liquidity,
@@ -215,16 +215,16 @@ contract LiquidityCurve is StorageLayout {
         }
     }
 
-    /* @notice Directly increments the haqq liquidity on the curve. */
-    function bumpHaqq (CurveMath.CurveState memory curve, uint128 seedDelta)
+    /* @notice Directly increments the haqqx liquidity on the curve. */
+    function bumpHaqqX (CurveMath.CurveState memory curve, uint128 seedDelta)
         private pure {
-        bumpHaqq(curve, seedDelta.toInt128Sign());
+        bumpHaqqX(curve, seedDelta.toInt128Sign());
     }
 
-    /* @notice Directly increments the haqq liquidity on the curve. */
-    function bumpHaqq (CurveMath.CurveState memory curve, int128 seedDelta)
+    /* @notice Directly increments the haqqx liquidity on the curve. */
+    function bumpHaqqX (CurveMath.CurveState memory curve, int128 seedDelta)
         private pure {
-        curve.haqqSeeds_ = curve.haqqSeeds_.addDelta(seedDelta);
+        curve.haqqxSeeds_ = curve.haqqxSeeds_.addDelta(seedDelta);
     }
 
     /* @notice Directly increments the concentrated liquidity on the curve, depending

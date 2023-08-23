@@ -2,9 +2,9 @@
 
 pragma solidity 0.8.19;
 
-import "../interfaces/IHaqqXPermitOracle.sol";
+import "../interfaces/IHaqqPermitOracle.sol";
 
-contract MockPermit is IHaqqXPermitOracle {
+contract MockPermit is IHaqqPermitOracle {
 
     address public user_;
     address public base_;
@@ -33,9 +33,9 @@ contract MockPermit is IHaqqXPermitOracle {
     }
         
 
-    function checkApprovedForHaqqXPool (address user, address sender,
+    function checkApprovedForHaqqPool (address user, address sender,
                                        address base, address quote,
-                                       Directives.HaqqDirective calldata,
+                                       Directives.HaqqXDirective calldata,
                                        Directives.SwapDirective calldata,
                                        Directives.ConcentratedDirective[] calldata,
                                        uint16 poolFee)
@@ -47,7 +47,7 @@ contract MockPermit is IHaqqXPermitOracle {
         discount = (user == user_ && base == base_ && quote_ == quote) ? 1 : 0;
      }
 
-    function checkApprovedForHaqqXSwap (address user, address sender,
+    function checkApprovedForHaqqSwap (address user, address sender,
                                        address base, address quote,
                                        bool isBuy, bool inBaseQty, uint128 qty,
                                        uint16 poolFee)
@@ -62,7 +62,7 @@ contract MockPermit is IHaqqXPermitOracle {
         discount = (user == user_ && base == base_ && quote_ == quote) ? 1 : 0;
     }
 
-    function checkApprovedForHaqqXMint (address user, address sender,
+    function checkApprovedForHaqqMint (address user, address sender,
                                        address base, address quote,
                                        int24 bidTick, int24 askTick, uint128 liq)
          external override returns (bool) {
@@ -75,7 +75,7 @@ contract MockPermit is IHaqqXPermitOracle {
          return user == user_ && base == base_ && quote_ == quote;
      }
 
-    function checkApprovedForHaqqXBurn (address user, address sender,
+    function checkApprovedForHaqqBurn (address user, address sender,
                                        address base, address quote,
                                        int24 bidTick, int24 askTick, uint128 liq)
          external override returns (bool) {
@@ -88,7 +88,7 @@ contract MockPermit is IHaqqXPermitOracle {
          return user == user_ && base == base_ && quote_ == quote;
      }
 
-    function checkApprovedForHaqqXInit (address user, address sender,
+    function checkApprovedForHaqqInit (address user, address sender,
                                        address base, address quote, uint256 poolIdx)
          external override returns (bool) {
          if (passThru_) { return true; }
